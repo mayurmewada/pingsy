@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${vonca.variable} ${notoSans.className} antialiased`}
+        className={`${vonca.variable} ${notoSans.className} overflow-hidden`}
       >
         {children}
       </body>
