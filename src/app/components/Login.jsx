@@ -5,7 +5,29 @@ import Button from "./common/Button";
 
 const Login = ({ setIsLoginAuth }) => {
     const [loading, setLoading] = useState(false);
-    const handleFormSubmit = (values) => {};
+    const handleFormSubmit = (values) => {
+        setLoading(true);
+        fetch("http://localhost:3000/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify(values),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.json();
+            })
+            .then((data) => {
+                console.log(data);
+            })
+            .catch((err) => {
+                console.error(err);
+            })
+            .finally(setLoading(false));
+    };
     return (
         <div className="bg-[background:var(--background)] shadow-lg border border-[border-color:var(--surface)] max-w-[414px] w-full py-9 px-6 mb-[64px] text-[color:var(--textlight)]">
             <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[34px] tracking-[1px] flex items-baseline mb-4 leading-[30px]">

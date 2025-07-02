@@ -13,25 +13,7 @@ const Index = ({ cookie }) => {
     const [isLoginAuth, setIsLoginAuth] = useState(true);
 
     useEffect(() => {
-        fetch("http://localhost:3000/api/auth/login", {
-            method: "POST",
-            body: JSON.stringify({ username: "example", username: "abc", password: "123" }),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                return res.json();
-            })
-            .then((data) => {
-                console.log(data);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
+
     }, []);
 
     return (

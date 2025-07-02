@@ -10,7 +10,7 @@ export const POST = async (request) => {
         const { username, email, password } = reqBody;
         const isUsernameExist = await userModel?.findOne({ username });
 
-        if (isUsernameExist) return Response?.json({ status: 401, message: "username already exist" });
+        if (isUsernameExist) return Response?.json({ status: 400, message: "username already exist" });
 
         const hashedPassword = await argon2.hash(password);
         await userModel?.create({ username, email, password: hashedPassword });
