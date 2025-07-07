@@ -2,6 +2,7 @@ import { Formik } from "formik";
 import React, { useState } from "react";
 import Input from "./common/Input";
 import Button from "./common/Button";
+import { toast } from "react-toastify";
 
 const Signup = ({ setIsLoginAuth }) => {
     const [loading, setLoading] = useState(false);
@@ -22,8 +23,21 @@ const Signup = ({ setIsLoginAuth }) => {
                 return res.json();
             })
             .then((data) => {
-                if (data?.status === 401) {
+                if (data?.status === 400) {
                     setUsernameError(true);
+                } else {
+                    toast.success(data?.message, {
+                        className: "!bg-[background:var(--surface)]",
+                        position: "bottom-left",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                        theme: "dark",
+                    });
+                    setIsLoginAuth(true)
                 }
             })
             .catch((err) => console.error(err))
