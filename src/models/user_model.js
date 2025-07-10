@@ -1,6 +1,12 @@
 const { default: mongoose } = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
 
 const userSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        required: true,
+        default: () => uuidv4(),
+    },
     username: {
         require: true,
         type: String,
@@ -14,7 +20,7 @@ const userSchema = new mongoose.Schema({
         require: true,
         type: String,
     },
-    chatIds: {
+    friends: {
         type: Array,
         default: [],
     },

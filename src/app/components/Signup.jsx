@@ -37,11 +37,13 @@ const Signup = ({ setIsLoginAuth }) => {
                         progress: undefined,
                         theme: "dark",
                     });
-                    setIsLoginAuth(true)
+                    setIsLoginAuth(true);
                 }
             })
             .catch((err) => console.error(err))
-            .finally(setLoading(false));
+            .finally(() => {
+                setLoading(false);
+            });
     };
     return (
         <div className="bg-[background:var(--background)] shadow-lg border border-[border-color:var(--surface)] max-w-[414px] w-full py-9 px-6 mb-[64px] text-[color:var(--textlight)]">

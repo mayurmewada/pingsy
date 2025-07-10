@@ -19,15 +19,16 @@ export const POST = async (request) => {
 
         const token = await jwt.sign(
             {
+                id: isUserExist?._id,
                 email: isUserExist?.email,
                 password: isUserExist?.password,
                 username: username,
             },
             process.env.PINGSY_JWT,
-            { expiresIn: "1h" }
+            { expiresIn: "7d" }
         );
         await cookies().set({
-            name: "pingsy",
+            name: "token",
             value: token,
             httpOnly: true,
             path: "/",

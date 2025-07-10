@@ -4,7 +4,7 @@ import Input from "./common/Input";
 import Button from "./common/Button";
 import { toast, ToastContainer } from "react-toastify";
 
-const Login = ({ setIsLoginAuth }) => {
+const Login = ({ setIsLoginAuth, setLoggedin }) => {
     const [loading, setLoading] = useState(false);
     const handleFormSubmit = (values) => {
         setLoading(true);
@@ -34,12 +34,16 @@ const Login = ({ setIsLoginAuth }) => {
                         progress: undefined,
                         theme: "dark",
                     });
+                } else {
+                    setLoggedin(true);
                 }
             })
             .catch((err) => {
                 console.error(err);
             })
-            .finally(setLoading(false));
+            .finally(() => {
+                setLoading(false);
+            });
     };
     return (
         <>

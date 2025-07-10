@@ -3,7 +3,7 @@ import Index from ".";
 
 const Home = async () => {
     const cookie = await cookies();
-    const pingsyCookie = cookie.get("pingsy");
+    const pingsyCookie = cookie.get("token");
 
     return <Index cookie={pingsyCookie?.value || false} />;
 };
