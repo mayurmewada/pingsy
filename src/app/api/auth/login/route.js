@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 dbConnect();
 
 export const POST = async (request) => {
+    const cookieStore = await cookies();
     try {
         const reqBody = await request.json();
         const { username, password } = reqBody;
@@ -27,7 +28,16 @@ export const POST = async (request) => {
             process.env.PINGSY_JWT,
             { expiresIn: "7d" }
         );
-        await cookies().set({
+        const cookieUserId = await cookieStore?.set({
+            name: "userId",
+            value: isUserExist?._id,
+            httpOnly: true,
+            path: "/",
+            secure: true,
+            sameSite: "strict",
+            maxAge: 60 * 60 * 24 * 7,
+        });
+        const cookieToken = await cookieStore?.set({
             name: "token",
             value: token,
             httpOnly: true,
@@ -36,7 +46,7 @@ export const POST = async (request) => {
             sameSite: "strict",
             maxAge: 60 * 60 * 24 * 7,
         });
-        return Response?.json({ data: { token } });
+        return Response?.json({ data: { token, userId: isUserExist?._id } });
     } catch (error) {
         return Response?.json({ error });
     }

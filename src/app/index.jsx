@@ -1,18 +1,31 @@
 "use client";
 import { Formik } from "formik";
 import Image from "next/image";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Button from "./components/common/Button";
 import Input from "./components/common/Input";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import { toast, ToastContainer } from "react-toastify";
+import { getSocket, initiateSocket } from "../../socket";
+import { io } from "socket.io-client";
 
-const Index = ({ cookie }) => {
+const Index = ({ userId, cookie }) => {
+    const chatRef = useRef(null);
+
     const [loggedin, setLoggedin] = useState(cookie);
+    const [loggedInUserId, setLoggedInUserId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isLoginAuth, setIsLoginAuth] = useState(true);
-    const [freindsList, setFriendsList] = useState([]);
+    const [friendsList, setFriendsList] = useState([]);
+    const [chat, setChat] = useState([]);
+    const [currMsg, setCurrMsg] = useState("");
+    const [msgBoxDisable, setMsgBoxDisable] = useState(false);
+    const [activeChat, setActiveChat] = useState({});
+
+    useEffect(() => {
+        setLoggedInUserId(userId);
+    });
 
     useEffect(() => {
         if (loggedin) {
@@ -30,6 +43,7 @@ const Index = ({ cookie }) => {
                 })
                 .then((data) => {
                     setFriendsList(data?.data || []);
+                    console.log(data?.data);
                 })
                 .catch((error) => {
                     console.log(error);
@@ -37,6 +51,94 @@ const Index = ({ cookie }) => {
                 .finally(() => {});
         }
     }, [loggedin]);
+
+    useEffect(() => {
+        fetch(`http://localhost:3000/api/chat/all?chatId=${activeChat?.chatId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setChat(data?.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .finally(() => {});
+
+        fetch("http://localhost:3000/api/socket");
+        initiateSocket();
+        const socket = getSocket();
+        socket.emit("joinRoom", { chatId: activeChat?.chatId });
+
+        socket.on("receiveMessage", (msg) => {
+            console.log("New message:", msg);
+            setChat((prev) => [...prev, msg]);
+        });
+
+        return () => {
+            socket.off("receiveMessage");
+        };
+    }, [activeChat?.userId]);
+
+    useEffect(() => {
+        if (chatRef.current) {
+            chatRef.current.scrollTop = chatRef.current.scrollHeight;
+        }
+    }, [chat]);
+
+    const handleMsgText = (e) => {
+        setCurrMsg(e.target.value);
+    };
+    const handleMsgSend = async (abc) => {
+        console.log(loggedInUserId, "-", userId, "-", abc);
+        if (currMsg?.length && userId) {
+            setMsgBoxDisable(true);
+
+            // fetch("http://localhost:3000/api/chat/send", {
+            //     method: "POST",
+            //     body: JSON.stringify({
+            //         chatId: activeChat?.chatId,
+            //         userId,
+            //         message: currMsg,
+            //     }),
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //     },
+            // })
+            //     .then((res) => {
+            //         if (!res.ok) {
+            //             throw new Error("Network response was not ok");
+            //         }
+            //         return res.json();
+            //     })
+            //     .then((data) => {})
+            //     .catch((error) => {
+            //         console.log(error);
+            //     })
+            //     .finally(() => {
+            //         setCurrMsg("");
+            //         setMsgBoxDisable(false);
+            //     });
+
+            console.log(activeChat?.chatId);
+            const socket = getSocket();
+            await socket.emit("sendMessage", {
+                chatId: activeChat?.chatId,
+                userId: userId,
+                message: currMsg,
+            });
+            setCurrMsg("");
+            setMsgBoxDisable(false);
+        }
+    };
 
     return (
         <>
@@ -52,15 +154,26 @@ const Index = ({ cookie }) => {
                                 <input className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" placeholder="Search" type="text" />
                             </div>
                             <ul className="overflow-y-scroll h-[calc(100vh-135px)] p-3">
-                                {freindsList?.map((freind) => (
-                                    <li key={freind?.lastMessageTime} className={`p-3 flex items-center gap-3 ${false ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}>
+                                {friendsList?.map((friend) => (
+                                    <li
+                                        key={friend?.lastMessageTime}
+                                        onClick={() => {
+                                            console.log(userId);
+                                            setActiveChat({
+                                                chatId: friend?.chatId,
+                                                userId: friend?.userId,
+                                                username: friend?.username,
+                                            });
+                                        }}
+                                        className={`p-3 flex items-center gap-3 ${friend?.userId === activeChat?.userId ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}
+                                    >
                                         <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                         <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                             <div className="flex justify-between items-baseline">
-                                                <span className="leading-[1]">{freind?.username}</span>
-                                                <span className="text-[13px] opacity-[0.7]">{freind?.lastMessageTime}</span>
+                                                <span className="leading-[1]">{friend?.username}</span>
+                                                <span className="text-[13px] opacity-[0.7]">{friend?.lastMessageTime}</span>
                                             </div>
-                                            <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{freind?.lastMessage}</span>
+                                            <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{friend?.lastMessage}</span>
                                         </div>
                                     </li>
                                 ))}
@@ -72,16 +185,37 @@ const Index = ({ cookie }) => {
                                     <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                     <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                         <div className="flex justify-between items-baseline">
-                                            <span className="leading-[1] text-[18px]">username</span>
+                                            <span className="leading-[1] text-[18px]">{activeChat?.username}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-[400px] h-[200px] border-y-[1px] border-y-[border-left-color:var(--surface)] h-full w-full relative">
+                            <div className="w-[400px] h-[calc(100vh-154px)] border-y-[1px] border-y-[border-left-color:var(--surface)] w-full relative">
                                 <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
+                                <div ref={chatRef} className="px-4 py-4 overflow-y-scroll h-full">
+                                    <ul className="flex flex-col gap-y-3">
+                                        {userId &&
+                                            chat?.map((message) => (
+                                                <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
+                                                    {message?.message}
+                                                </li>
+                                            ))}
+                                    </ul>
+                                </div>
                             </div>
                             <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
-                                <input className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" placeholder="Type Message" type="text" />
+                                {userId ? (
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            handleMsgSend(userId);
+                                        }}
+                                    >
+                                        <input disabled={msgBoxDisable} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" onChange={handleMsgText} placeholder="Type Message" type="text" />
+                                    </form>
+                                ) : (
+                                    ""
+                                )}
                             </div>
                         </div>
                     </>
