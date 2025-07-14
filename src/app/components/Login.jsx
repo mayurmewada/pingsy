@@ -4,7 +4,7 @@ import Input from "./common/Input";
 import Button from "./common/Button";
 import { toast, ToastContainer } from "react-toastify";
 
-const Login = ({ setIsLoginAuth, setLoggedin }) => {
+const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId }) => {
     const [loading, setLoading] = useState(false);
     const handleFormSubmit = (values) => {
         setLoading(true);
@@ -36,6 +36,7 @@ const Login = ({ setIsLoginAuth, setLoggedin }) => {
                     });
                 } else {
                     setLoggedin(true);
+                    setLoggedInUserId(data?.data?.userId);
                 }
             })
             .catch((err) => {

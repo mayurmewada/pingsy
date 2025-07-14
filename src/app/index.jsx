@@ -14,7 +14,7 @@ const Index = ({ userId, cookie }) => {
     const chatRef = useRef(null);
 
     const [loggedin, setLoggedin] = useState(cookie);
-    const [loggedInUserId, setLoggedInUserId] = useState(null);
+    const [loggedInUserId, setLoggedInUserId] = useState(userId);
     const [loading, setLoading] = useState(false);
     const [isLoginAuth, setIsLoginAuth] = useState(true);
     const [friendsList, setFriendsList] = useState([]);
@@ -24,7 +24,9 @@ const Index = ({ userId, cookie }) => {
     const [activeChat, setActiveChat] = useState({});
 
     useEffect(() => {
-        setLoggedInUserId(userId);
+        if (userId !== null) {
+            setLoggedInUserId(userId);
+        }
     });
 
     useEffect(() => {
@@ -43,7 +45,6 @@ const Index = ({ userId, cookie }) => {
                 })
                 .then((data) => {
                     setFriendsList(data?.data || []);
-                    console.log(data?.data);
                 })
                 .catch((error) => {
                     console.log(error);
@@ -79,7 +80,6 @@ const Index = ({ userId, cookie }) => {
         socket.emit("joinRoom", { chatId: activeChat?.chatId });
 
         socket.on("receiveMessage", (msg) => {
-            console.log("New message:", msg);
             setChat((prev) => [...prev, msg]);
         });
 
@@ -97,42 +97,14 @@ const Index = ({ userId, cookie }) => {
     const handleMsgText = (e) => {
         setCurrMsg(e.target.value);
     };
-    const handleMsgSend = async (abc) => {
-        console.log(loggedInUserId, "-", userId, "-", abc);
-        if (currMsg?.length && userId) {
+    const handleMsgSend = async () => {
+        if (currMsg?.length && loggedInUserId) {
             setMsgBoxDisable(true);
 
-            // fetch("http://localhost:3000/api/chat/send", {
-            //     method: "POST",
-            //     body: JSON.stringify({
-            //         chatId: activeChat?.chatId,
-            //         userId,
-            //         message: currMsg,
-            //     }),
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            // })
-            //     .then((res) => {
-            //         if (!res.ok) {
-            //             throw new Error("Network response was not ok");
-            //         }
-            //         return res.json();
-            //     })
-            //     .then((data) => {})
-            //     .catch((error) => {
-            //         console.log(error);
-            //     })
-            //     .finally(() => {
-            //         setCurrMsg("");
-            //         setMsgBoxDisable(false);
-            //     });
-
-            console.log(activeChat?.chatId);
             const socket = getSocket();
             await socket.emit("sendMessage", {
                 chatId: activeChat?.chatId,
-                userId: userId,
+                userId: loggedInUserId,
                 message: currMsg,
             });
             setCurrMsg("");
@@ -158,7 +130,6 @@ const Index = ({ userId, cookie }) => {
                                     <li
                                         key={friend?.lastMessageTime}
                                         onClick={() => {
-                                            console.log(userId);
                                             setActiveChat({
                                                 chatId: friend?.chatId,
                                                 userId: friend?.userId,
@@ -194,7 +165,7 @@ const Index = ({ userId, cookie }) => {
                                 <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
                                 <div ref={chatRef} className="px-4 py-4 overflow-y-scroll h-full">
                                     <ul className="flex flex-col gap-y-3">
-                                        {userId &&
+                                        {loggedInUserId &&
                                             chat?.map((message) => (
                                                 <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
                                                     {message?.message}
@@ -204,14 +175,14 @@ const Index = ({ userId, cookie }) => {
                                 </div>
                             </div>
                             <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
-                                {userId ? (
+                                {loggedInUserId ? (
                                     <form
                                         onSubmit={(e) => {
                                             e.preventDefault();
-                                            handleMsgSend(userId);
+                                            handleMsgSend();
                                         }}
                                     >
-                                        <input disabled={msgBoxDisable} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" onChange={handleMsgText} placeholder="Type Message" type="text" />
+                                        <input disabled={msgBoxDisable} value={currMsg} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" onChange={handleMsgText} placeholder="Type Message" type="text" />
                                     </form>
                                 ) : (
                                     ""
@@ -223,7 +194,7 @@ const Index = ({ userId, cookie }) => {
                     <div className="w-full border-l-[1px] border-l-[border-left-color:var(--surface)] flex flex-col">
                         <div className="w-[400px] h-[200px] border-y-[1px] border-y-[border-left-color:var(--surface)] h-full w-full relative">
                             <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
-                            <div className="flex flex-col justify-center items-center h-full px-4">{isLoginAuth ? <Login setIsLoginAuth={setIsLoginAuth} setLoggedin={setLoggedin} /> : <Signup setIsLoginAuth={setIsLoginAuth} />}</div>
+                            <div className="flex flex-col justify-center items-center h-full px-4">{isLoginAuth ? <Login setIsLoginAuth={setIsLoginAuth} setLoggedin={setLoggedin} setLoggedInUserId={setLoggedInUserId} /> : <Signup setIsLoginAuth={setIsLoginAuth} />}</div>
                         </div>
                     </div>
                 )}
