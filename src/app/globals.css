@@ -10,14 +10,14 @@
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+    width: 5px;
+    height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #121212;
+    background: #121212;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e1e1e;
+    background: #1e1e1e;
 }
 
 * {
@@ -27,4 +27,19 @@
 body {
     background: var(--background);
     color: var(--foreground);
+}
+
+@media (max-width: 1024px) {
+    .main-block {
+        transition: transform 0.3s ease-in-out;
+        transform: translateX(-100%);
+    }
+    .chat-block {
+        transition: transform 0.3s ease-in-out;
+        transform: translateX(100%);
+    }
+    .main-block.visible,
+    .chat-block.visible {
+        transform: translateX(0);
+    }
 }

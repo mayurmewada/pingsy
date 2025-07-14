@@ -9,7 +9,7 @@ const Button = ({ title = null, viewType = null, variant, size, isDisabled, type
 
         primary: "bg-[background:var(--primary)] hover:border-grey-700 hover:bg-grey-700 rounded-[8px] text-[color:var(--textdark)]",
         secondary: "border border-grey-600 hover:border-grey-700 bg-white hover:bg-grey-700 rounded-[8px] text-grey-600 hover:text-white",
-        text: "border-white hover:border-grey-50 bg-white hover:bg-grey-50 rounded-[8px] text-grey-600 hover:text-grey-700",
+        text: "border-white hover:border-grey-50 bg-[background-color:var(--background)] hover:bg-grey-50 rounded-[8px] text-white",
     };
 
     return (

@@ -9,6 +9,7 @@ import Login from "./components/Login";
 import { toast, ToastContainer } from "react-toastify";
 import { getSocket, initiateSocket } from "../../socket";
 import { io } from "socket.io-client";
+import { getFormatedDate } from "@/utils/helperFunction";
 
 const Index = ({ userId, cookie }) => {
     const chatRef = useRef(null);
@@ -21,7 +22,7 @@ const Index = ({ userId, cookie }) => {
     const [chat, setChat] = useState([]);
     const [currMsg, setCurrMsg] = useState("");
     const [msgBoxDisable, setMsgBoxDisable] = useState(false);
-    const [activeChat, setActiveChat] = useState({});
+    const [activeChat, setActiveChat] = useState(null);
 
     useEffect(() => {
         if (userId !== null) {
@@ -115,10 +116,10 @@ const Index = ({ userId, cookie }) => {
     return (
         <>
             <ToastContainer />
-            <main className="flex min-h-[100vh]">
+            <main className="flex min-h-[100vh] relative">
                 {loggedin ? (
                     <>
-                        <div className="max-w-[30%] w-full">
+                        <div className={`lg:max-w-[30%] w-full main-block bg-[background-color:var(--background)] ${activeChat ? "" : "visible"}`}>
                             <div className="px-6 py-6">
                                 <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[28px] tracking-[1px] flex items-baseline mb-4 leading-[30px]">
                                     P<span className="text-[24px] tracking-[1px]">INGSY</span>
@@ -150,9 +151,10 @@ const Index = ({ userId, cookie }) => {
                                 ))}
                             </ul>
                         </div>
-                        <div className="max-w-[70%] w-full border-l-[1px] border-l-[border-left-color:var(--surface)] flex flex-col">
+                        <div className={`lg:max-w-[70%] w-full absolute lg:relative inset-[0] chat-block lg:border-l-[1px] lg:border-l-[border-left-color:var(--surface)] flex flex-col ${activeChat ? "visible" : ""}`}>
                             <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
                                 <div className="flex items-center gap-3">
+                                    <Button onClick={() => setActiveChat(null)} className={"lg:hidden cursor-pointer mr-3"} leadingIcon={<i className="ri-arrow-left-s-line text-[30px] font-normal"></i>} variant={"text"} />
                                     <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                     <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                         <div className="flex justify-between items-baseline">
@@ -169,6 +171,7 @@ const Index = ({ userId, cookie }) => {
                                             chat?.map((message) => (
                                                 <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
                                                     {message?.message}
+                                                    <p className="text-[12px] mt-2 opacity-[50%]">{getFormatedDate(Number(message?.time))}</p>
                                                 </li>
                                             ))}
                                     </ul>
