@@ -8,7 +8,7 @@ const Button = ({ title = null, viewType = null, variant, size, isDisabled, type
         large: "text-[15px] leading-[16px] px-5 py-[10px] h-[40px]",
 
         primary: "bg-[background:var(--primary)] hover:border-grey-700 hover:bg-grey-700 rounded-[8px] text-[color:var(--textdark)]",
-        secondary: "border border-grey-600 hover:border-grey-700 bg-white hover:bg-grey-700 rounded-[8px] text-grey-600 hover:text-white",
+        secondary: "border border-grey-600 hover:border-[border:var(--primary)] bg-[background-color:var(--background)] rounded-[8px] text-white hover:text-[color:var(--primary)] opacity-[0.8]",
         text: "border-white hover:border-grey-50 bg-[background-color:var(--background)] hover:bg-grey-50 rounded-[8px] text-white",
     };
 

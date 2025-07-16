@@ -23,6 +23,7 @@ const Index = ({ userId, cookie }) => {
     const [currMsg, setCurrMsg] = useState("");
     const [msgBoxDisable, setMsgBoxDisable] = useState(false);
     const [activeChat, setActiveChat] = useState(null);
+    const [showFindFriends, setShowFindFriends] = useState(false);
 
     useEffect(() => {
         if (userId !== null) {
@@ -120,36 +121,74 @@ const Index = ({ userId, cookie }) => {
                 {loggedin ? (
                     <>
                         <div className={`lg:max-w-[30%] w-full main-block bg-[background-color:var(--background)] ${activeChat ? "" : "visible"}`}>
-                            <div className="px-6 py-6">
-                                <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[28px] tracking-[1px] flex items-baseline mb-4 leading-[30px]">
+                            <div className="px-6">
+                                <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[28px] tracking-[1px] flex items-baseline leading-[82px]">
                                     P<span className="text-[24px] tracking-[1px]">INGSY</span>
                                 </h1>
-                                <input className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" placeholder="Search" type="text" />
+                                <input onFocus={() => setShowFindFriends(true)} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" placeholder="Search" type="text" />
                             </div>
-                            <ul className="overflow-y-scroll h-[calc(100vh-135px)] p-3">
-                                {friendsList?.map((friend) => (
-                                    <li
-                                        key={friend?.lastMessageTime}
-                                        onClick={() => {
-                                            setActiveChat({
-                                                chatId: friend?.chatId,
-                                                userId: friend?.userId,
-                                                username: friend?.username,
-                                            });
-                                        }}
-                                        className={`p-3 flex items-center gap-3 ${friend?.userId === activeChat?.userId ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}
-                                    >
-                                        <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
-                                        <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                            <div className="flex justify-between items-baseline">
-                                                <span className="leading-[1]">{friend?.username}</span>
-                                                <span className="text-[13px] opacity-[0.7]">{friend?.lastMessageTime}</span>
-                                            </div>
-                                            <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{friend?.lastMessage}</span>
+                            <div className="overflow-y-scroll h-[calc(100vh-135px)] pt-5">
+                                {showFindFriends ? (
+                                    <div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-white opacity-[0.7] px-6">Find Friends</span>
+                                            <Button onClick={() => setShowFindFriends(false)} className={"cursor-pointer opacity-[0.7] mr-3"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} variant={"text"} />
                                         </div>
-                                    </li>
-                                ))}
-                            </ul>
+                                        <ul className="p-3">
+                                            {friendsList?.map((friend) => (
+                                                <li
+                                                    key={friend?.lastMessageTime}
+                                                    onClick={() => {
+                                                        setActiveChat({
+                                                            chatId: friend?.chatId,
+                                                            userId: friend?.userId,
+                                                            username: friend?.username,
+                                                        });
+                                                    }}
+                                                    className={`p-3 flex items-center gap-3`}
+                                                >
+                                                    <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                                    <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                                        <div className="flex justify-between items-baseline">
+                                                            <span className="leading-[1]">{friend?.username}</span>
+                                                            <Button leadingIcon={<i className="ri-add-fill"></i>} title={"Request"} size={"small"} variant={"secondary"} />
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ) : (
+                                    ""
+                                )}
+                                <div>
+                                    <span className="text-white opacity-[0.7] px-6">Chats</span>
+                                    <ul className="p-3">
+                                        {friendsList?.map((friend) => (
+                                            <li
+                                                key={friend?.lastMessageTime}
+                                                onClick={() => {
+                                                    setActiveChat({
+                                                        chatId: friend?.chatId,
+                                                        userId: friend?.userId,
+                                                        username: friend?.username,
+                                                    });
+                                                }}
+                                                className={`p-3 flex items-center gap-3 ${friend?.userId === activeChat?.userId ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}
+                                            >
+                                                <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                                <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                                    <div className="flex justify-between items-baseline">
+                                                        <span className="leading-[1]">{friend?.username}</span>
+                                                        <span className="text-[13px] opacity-[0.7]">{friend?.lastMessageTime}</span>
+                                                    </div>
+                                                    <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{friend?.lastMessage}</span>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         <div className={`lg:max-w-[70%] w-full absolute lg:relative inset-[0] chat-block lg:border-l-[1px] lg:border-l-[border-left-color:var(--surface)] flex flex-col ${activeChat ? "visible" : ""}`}>
                             <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
