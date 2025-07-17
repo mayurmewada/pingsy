@@ -24,6 +24,7 @@ const Index = ({ userId, cookie }) => {
     const [msgBoxDisable, setMsgBoxDisable] = useState(false);
     const [activeChat, setActiveChat] = useState(null);
     const [showFindFriends, setShowFindFriends] = useState(false);
+    const [showFriendRequests, setShowFriendRequests] = useState(false);
 
     useEffect(() => {
         if (userId !== null) {
@@ -129,7 +130,7 @@ const Index = ({ userId, cookie }) => {
                             </div>
                             <div className="overflow-y-scroll h-[calc(100vh-135px)] pt-5">
                                 {showFindFriends ? (
-                                    <div>
+                                    <div className="mb-3">
                                         <div className="flex justify-between items-center">
                                             <span className="text-white opacity-[0.7] px-6">Find Friends</span>
                                             <Button onClick={() => setShowFindFriends(false)} className={"cursor-pointer opacity-[0.7] mr-3"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} variant={"text"} />
@@ -151,7 +152,7 @@ const Index = ({ userId, cookie }) => {
                                                     <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                                         <div className="flex justify-between items-baseline">
                                                             <span className="leading-[1]">{friend?.username}</span>
-                                                            <Button leadingIcon={<i className="ri-add-fill"></i>} title={"Request"} size={"small"} variant={"secondary"} />
+                                                            <Button className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
                                                         </div>
                                                     </div>
                                                 </li>
@@ -161,6 +162,42 @@ const Index = ({ userId, cookie }) => {
                                 ) : (
                                     ""
                                 )}
+                                <div className="mb-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-white opacity-[0.7] px-6">Friend Requests</span>
+                                        <Button onClick={() => setShowFriendRequests(!showFriendRequests)} className={"cursor-pointer opacity-[0.7] mr-3"} leadingIcon={<i className={`${showFriendRequests ? "ri-arrow-up-s-line" : "ri-arrow-down-s-line"} text-[18px] font-normal`}></i>} variant={"text"} />
+                                    </div>
+                                    {showFriendRequests ? (
+                                        <ul className="p-3">
+                                            {friendsList?.map((friend) => (
+                                                <li
+                                                    key={friend?.lastMessageTime}
+                                                    onClick={() => {
+                                                        setActiveChat({
+                                                            chatId: friend?.chatId,
+                                                            userId: friend?.userId,
+                                                            username: friend?.username,
+                                                        });
+                                                    }}
+                                                    className={`p-3 flex items-center gap-3`}
+                                                >
+                                                    <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                                    <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                                        <div className="flex justify-between items-baseline">
+                                                            <span className="leading-[1]">{friend?.username}</span>
+                                                            <div className="flex items-center gap-3">
+                                                                <Button className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                <Button className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        ""
+                                    )}
+                                </div>
                                 <div>
                                     <span className="text-white opacity-[0.7] px-6">Chats</span>
                                     <ul className="p-3">
