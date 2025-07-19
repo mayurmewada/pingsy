@@ -1,40 +1,90 @@
 "use client";
-import { Formik } from "formik";
 import Image from "next/image";
-import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "./components/common/Button";
 import Input from "./components/common/Input";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import { toast, ToastContainer } from "react-toastify";
 import { getSocket, initiateSocket } from "../../socket";
-import { io } from "socket.io-client";
 import { getFormatedDate } from "@/utils/helperFunction";
+import Loader from "./components/common/Loader";
 
 const Index = ({ userId, cookie }) => {
     const chatRef = useRef(null);
 
+    // states for loggedin user
     const [loggedin, setLoggedin] = useState(cookie);
     const [loggedInUserId, setLoggedInUserId] = useState(userId);
-    const [loading, setLoading] = useState(false);
+
+    // state for login / signup form
     const [isLoginAuth, setIsLoginAuth] = useState(true);
-    const [friendsList, setFriendsList] = useState([]);
-    const [chat, setChat] = useState([]);
-    const [currMsg, setCurrMsg] = useState("");
-    const [msgBoxDisable, setMsgBoxDisable] = useState(false);
-    const [activeChat, setActiveChat] = useState(null);
-    const [showFindFriends, setShowFindFriends] = useState(false);
+
+    // states for search
+    const [searchText, setSearchText] = useState("");
+    const [showFindFriends, setShowFindFriends] = useState([]);
+    const [searchResultLoading, setSearchResultLoading] = useState(false);
+    const [searchResult, setSearchResult] = useState([]);
+
+    //  state for friend requests
     const [showFriendRequests, setShowFriendRequests] = useState(false);
 
+    // states for my chats
+    const [friendsListLoading, setFriendsListLoading] = useState(false);
+    const [friendsList, setFriendsList] = useState([]);
+
+    //  states for active / current chat
+    const [activeChat, setActiveChat] = useState(null);
+    const [chatLoading, setChatLoading] = useState(false);
+    const [chat, setChat] = useState([]);
+
+    // states for message input
+    const [currMsg, setCurrMsg] = useState("");
+    const [msgBoxDisable, setMsgBoxDisable] = useState(false);
+
+    // set loggedin userid
     useEffect(() => {
         if (userId !== null) {
             setLoggedInUserId(userId);
         }
     });
 
+    // handlers for search input
+    const handleSearchTextChange = (e) => {
+        setSearchText(e.target.value);
+    };
+    const handleSearchTextSend = () => {
+        if (searchText?.length >= 3) {
+            setSearchResultLoading(true);
+            fetch(`http://localhost:3000/api/friends/find/${searchText}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error("There is a problem in network call");
+                    }
+                    return res.json();
+                })
+                .then(({ data }) => {
+                    setSearchResult(data);
+                })
+                .catch((error) => {
+                    console.log(error);
+                })
+                .finally(() => {
+                    setSearchResultLoading(false);
+                });
+        }
+    };
+
+    // fetch my chats
     useEffect(() => {
         if (loggedin) {
-            fetch("http://localhost:3000/api/getFriends", {
+            setFriendsListLoading(true);
+            fetch("http://localhost:3000/api/friends/get", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -52,11 +102,15 @@ const Index = ({ userId, cookie }) => {
                 .catch((error) => {
                     console.log(error);
                 })
-                .finally(() => {});
+                .finally(() => {
+                    setFriendsListLoading(false);
+                });
         }
     }, [loggedin]);
 
+    // fetch selected user chats
     useEffect(() => {
+        setChatLoading(true);
         fetch(`http://localhost:3000/api/chat/all?chatId=${activeChat?.chatId}`, {
             method: "GET",
             headers: {
@@ -75,7 +129,9 @@ const Index = ({ userId, cookie }) => {
             .catch((error) => {
                 console.log(error);
             })
-            .finally(() => {});
+            .finally(() => {
+                setChatLoading(false);
+            });
 
         fetch("http://localhost:3000/api/socket");
         initiateSocket();
@@ -91,12 +147,14 @@ const Index = ({ userId, cookie }) => {
         };
     }, [activeChat?.userId]);
 
+    // stick chat to bottom first
     useEffect(() => {
         if (chatRef.current) {
             chatRef.current.scrollTop = chatRef.current.scrollHeight;
         }
     }, [chat]);
 
+    // handlers for message input
     const handleMsgText = (e) => {
         setCurrMsg(e.target.value);
     };
@@ -119,49 +177,76 @@ const Index = ({ userId, cookie }) => {
         <>
             <ToastContainer />
             <main className="flex min-h-[100vh] relative">
+                {/* loggedin content */}
                 {loggedin ? (
                     <>
+                        {/* main section / left side section */}
                         <div className={`lg:max-w-[30%] w-full main-block bg-[background-color:var(--background)] ${activeChat ? "" : "visible"}`}>
+                            {/* branding / search section */}
                             <div className="px-6">
                                 <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[28px] tracking-[1px] flex items-baseline leading-[82px]">
                                     P<span className="text-[24px] tracking-[1px]">INGSY</span>
                                 </h1>
-                                <input onFocus={() => setShowFindFriends(true)} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" placeholder="Search" type="text" />
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        handleSearchTextSend();
+                                    }}
+                                >
+                                    <Input onFocus={() => setShowFindFriends(true)} placeholder={"Search"} name="username" type="text" onChange={handleSearchTextChange} value={searchText} />
+                                </form>
                             </div>
+                            {/* search result / friend requests / my chats */}
                             <div className="overflow-y-scroll h-[calc(100vh-135px)] pt-5">
+                                {/* find friends / search results */}
                                 {showFindFriends ? (
                                     <div className="mb-3">
                                         <div className="flex justify-between items-center">
                                             <span className="text-white opacity-[0.7] px-6">Find Friends</span>
-                                            <Button onClick={() => setShowFindFriends(false)} className={"cursor-pointer opacity-[0.7] mr-3"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} variant={"text"} />
+                                            <Button
+                                                onClick={() => {
+                                                    setShowFindFriends(false);
+                                                    setSearchText("");
+                                                }}
+                                                className={"cursor-pointer opacity-[0.7] mr-3"}
+                                                leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>}
+                                                variant={"text"}
+                                            />
                                         </div>
-                                        <ul className="p-3">
-                                            {friendsList?.map((friend) => (
-                                                <li
-                                                    key={friend?.lastMessageTime}
-                                                    onClick={() => {
-                                                        setActiveChat({
-                                                            chatId: friend?.chatId,
-                                                            userId: friend?.userId,
-                                                            username: friend?.username,
-                                                        });
-                                                    }}
-                                                    className={`p-3 flex items-center gap-3`}
-                                                >
-                                                    <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
-                                                    <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                                        <div className="flex justify-between items-baseline">
-                                                            <span className="leading-[1]">{friend?.username}</span>
-                                                            <Button className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                        {searchText.length < 3 ? (
+                                            <p className="text-[13px] opacity-[0.7] text-white px-6 pt-3 pb-5">Type minimum 3 letters to search for Friends.</p>
+                                        ) : searchResultLoading ? (
+                                            <Loader />
+                                        ) : (
+                                            <ul className="p-3">
+                                                {searchResult?.map((friend) => (
+                                                    <li
+                                                        key={friend?._id}
+                                                        onClick={() => {
+                                                            setActiveChat({
+                                                                chatId: friend?.chatId,
+                                                                userId: friend?.userId,
+                                                                username: friend?.username,
+                                                            });
+                                                        }}
+                                                        className={`p-3 flex items-center gap-3`}
+                                                    >
+                                                        <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                                        <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                                            <div className="flex justify-between items-baseline">
+                                                                <span className="leading-[1]">{friend?.username}</span>
+                                                                <Button className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
                                     </div>
                                 ) : (
                                     ""
                                 )}
+                                {/* friend requests */}
                                 <div className="mb-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-white opacity-[0.7] px-6">Friend Requests</span>
@@ -198,78 +283,99 @@ const Index = ({ userId, cookie }) => {
                                         ""
                                     )}
                                 </div>
+                                {/* my chats */}
                                 <div>
                                     <span className="text-white opacity-[0.7] px-6">Chats</span>
                                     <ul className="p-3">
-                                        {friendsList?.map((friend) => (
-                                            <li
-                                                key={friend?.lastMessageTime}
-                                                onClick={() => {
-                                                    setActiveChat({
-                                                        chatId: friend?.chatId,
-                                                        userId: friend?.userId,
-                                                        username: friend?.username,
-                                                    });
-                                                }}
-                                                className={`p-3 flex items-center gap-3 ${friend?.userId === activeChat?.userId ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}
-                                            >
-                                                <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
-                                                <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                                    <div className="flex justify-between items-baseline">
-                                                        <span className="leading-[1]">{friend?.username}</span>
-                                                        <span className="text-[13px] opacity-[0.7]">{friend?.lastMessageTime}</span>
+                                        {friendsListLoading ? (
+                                            <Loader />
+                                        ) : (
+                                            friendsList?.map((friend) => (
+                                                <li
+                                                    key={friend?.lastMessageTime}
+                                                    onClick={() => {
+                                                        setActiveChat({
+                                                            chatId: friend?.chatId,
+                                                            userId: friend?.userId,
+                                                            username: friend?.username,
+                                                        });
+                                                    }}
+                                                    className={`p-3 flex items-center gap-3 ${friend?.userId === activeChat?.userId ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}
+                                                >
+                                                    <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                                    <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                                        <div className="flex justify-between items-baseline">
+                                                            <span className="leading-[1]">{friend?.username}</span>
+                                                            <span className="text-[13px] opacity-[0.7]">{friend?.lastMessageTime}</span>
+                                                        </div>
+                                                        <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{friend?.lastMessage}</span>
                                                     </div>
-                                                    <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{friend?.lastMessage}</span>
-                                                </div>
-                                            </li>
-                                        ))}
+                                                </li>
+                                            ))
+                                        )}
                                     </ul>
                                 </div>
                             </div>
                         </div>
+                        {/* chat section / right side section */}
                         <div className={`lg:max-w-[70%] w-full absolute lg:relative inset-[0] chat-block lg:border-l-[1px] lg:border-l-[border-left-color:var(--surface)] flex flex-col ${activeChat ? "visible" : ""}`}>
-                            <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
-                                <div className="flex items-center gap-3">
-                                    <Button onClick={() => setActiveChat(null)} className={"lg:hidden cursor-pointer mr-3"} leadingIcon={<i className="ri-arrow-left-s-line text-[30px] font-normal"></i>} variant={"text"} />
-                                    <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
-                                    <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                        <div className="flex justify-between items-baseline">
-                                            <span className="leading-[1] text-[18px]">{activeChat?.username}</span>
+                            {activeChat ? (
+                                <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
+                                    <div className="flex items-center gap-3">
+                                        <Button onClick={() => setActiveChat(null)} className={"lg:hidden cursor-pointer mr-3"} leadingIcon={<i className="ri-arrow-left-s-line text-[30px] font-normal"></i>} variant={"text"} />
+                                        <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                        <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="leading-[1] text-[18px]">{activeChat?.username}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="w-[400px] h-[calc(100vh-154px)] border-y-[1px] border-y-[border-left-color:var(--surface)] w-full relative">
+                            ) : (
+                                ""
+                            )}
+                            <div className={`w-[400px] ${activeChat ? "h-[calc(100vh-154px)]" : "h-[100vh]"} border-y-[1px] border-y-[border-left-color:var(--surface)] w-full relative`}>
                                 <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
                                 <div ref={chatRef} className="px-4 py-4 overflow-y-scroll h-full">
-                                    <ul className="flex flex-col gap-y-3">
-                                        {loggedInUserId &&
-                                            chat?.map((message) => (
-                                                <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
-                                                    {message?.message}
-                                                    <p className="text-[12px] mt-2 opacity-[50%]">{getFormatedDate(Number(message?.time))}</p>
-                                                </li>
-                                            ))}
-                                    </ul>
+                                    {friendsList.length > 0 && chatLoading ? (
+                                        <div className="h-full flex">
+                                            <Loader />
+                                        </div>
+                                    ) : (
+                                        <ul className="flex flex-col gap-y-3">
+                                            {loggedInUserId &&
+                                                chat?.map((message) => (
+                                                    <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
+                                                        {message?.message}
+                                                        <p className="text-[12px] mt-2 opacity-[50%]">{getFormatedDate(Number(message?.time))}</p>
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    )}
                                 </div>
                             </div>
-                            <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
-                                {loggedInUserId ? (
-                                    <form
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            handleMsgSend();
-                                        }}
-                                    >
-                                        <input disabled={msgBoxDisable} value={currMsg} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" onChange={handleMsgText} placeholder="Type Message" type="text" />
-                                    </form>
-                                ) : (
-                                    ""
-                                )}
-                            </div>
+                            {activeChat ? (
+                                <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
+                                    {loggedInUserId ? (
+                                        <form
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                handleMsgSend();
+                                            }}
+                                        >
+                                            <input disabled={msgBoxDisable} value={currMsg} className="bg-[background:var(--surface)] rounded-[12px] w-full h-[40px] text-[color:var(--textlight)] px-4" onChange={handleMsgText} placeholder="Type Message" type="text" />
+                                        </form>
+                                    ) : (
+                                        ""
+                                    )}
+                                </div>
+                            ) : (
+                                ""
+                            )}
                         </div>
                     </>
                 ) : (
+                    // non loggedin content
                     <div className="w-full border-l-[1px] border-l-[border-left-color:var(--surface)] flex flex-col">
                         <div className="w-[400px] h-[200px] border-y-[1px] border-y-[border-left-color:var(--surface)] h-full w-full relative">
                             <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
