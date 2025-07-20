@@ -22,12 +22,14 @@ const Index = ({ userId, cookie }) => {
 
     // states for search
     const [searchText, setSearchText] = useState("");
-    const [showFindFriends, setShowFindFriends] = useState([]);
+    const [showFindFriends, setShowFindFriends] = useState(false);
     const [searchResultLoading, setSearchResultLoading] = useState(false);
     const [searchResult, setSearchResult] = useState([]);
 
     //  state for friend requests
     const [showFriendRequests, setShowFriendRequests] = useState(false);
+    const [friendRequestsLoading, setFriendRequestsLoading] = useState(false);
+    const [friendRequests, setFriendRequests] = useState([]);
 
     // states for my chats
     const [friendsListLoading, setFriendsListLoading] = useState(false);
@@ -47,7 +49,7 @@ const Index = ({ userId, cookie }) => {
         if (userId !== null) {
             setLoggedInUserId(userId);
         }
-    });
+    }, []);
 
     // handlers for search input
     const handleSearchTextChange = (e) => {
@@ -79,6 +81,68 @@ const Index = ({ userId, cookie }) => {
                 });
         }
     };
+
+    // handler for send friend request
+    const handleSendRequest = (id, username) => {
+        fetch("http://localhost:3000/api/friends/request/send", {
+            method: "POST",
+            body: JSON.stringify({ id, username }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network error in api call");
+                }
+                return res.json();
+            })
+            .then((data) => {
+                toast.success(data?.message, {
+                    className: "!bg-[background:var(--surface)]",
+                    position: "bottom-left",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "dark",
+                });
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .finally(() => {});
+    };
+
+    // fetch friend request
+    useEffect(() => {
+        if (showFriendRequests) {
+            setFriendRequestsLoading(true);
+            fetch("http://localhost:3000/api/friends/request/all", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error("Network call error");
+                    }
+                    return res.json();
+                })
+                .then((data) => {
+                    setFriendRequests(data?.data);
+                })
+                .catch((error) => {
+                    console.log(error);
+                })
+                .finally(() => {
+                    setFriendRequestsLoading(false);
+                });
+        }
+    }, [showFriendRequests]);
 
     // fetch my chats
     useEffect(() => {
@@ -220,22 +284,12 @@ const Index = ({ userId, cookie }) => {
                                         ) : (
                                             <ul className="p-3">
                                                 {searchResult?.map((friend) => (
-                                                    <li
-                                                        key={friend?._id}
-                                                        onClick={() => {
-                                                            setActiveChat({
-                                                                chatId: friend?.chatId,
-                                                                userId: friend?.userId,
-                                                                username: friend?.username,
-                                                            });
-                                                        }}
-                                                        className={`p-3 flex items-center gap-3`}
-                                                    >
+                                                    <li key={friend?._id} className={`p-3 flex items-center gap-3`}>
                                                         <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                                         <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                                             <div className="flex justify-between items-baseline">
                                                                 <span className="leading-[1]">{friend?.username}</span>
-                                                                <Button className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                <Button onClick={() => handleSendRequest(friend?._id, friend?.username)} className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
                                                             </div>
                                                         </div>
                                                     </li>
@@ -254,30 +308,36 @@ const Index = ({ userId, cookie }) => {
                                     </div>
                                     {showFriendRequests ? (
                                         <ul className="p-3">
-                                            {friendsList?.map((friend) => (
-                                                <li
-                                                    key={friend?.lastMessageTime}
-                                                    onClick={() => {
-                                                        setActiveChat({
-                                                            chatId: friend?.chatId,
-                                                            userId: friend?.userId,
-                                                            username: friend?.username,
-                                                        });
-                                                    }}
-                                                    className={`p-3 flex items-center gap-3`}
-                                                >
-                                                    <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
-                                                    <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                                        <div className="flex justify-between items-baseline">
-                                                            <span className="leading-[1]">{friend?.username}</span>
-                                                            <div className="flex items-center gap-3">
-                                                                <Button className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
-                                                                <Button className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                            {friendRequestsLoading ? (
+                                                <Loader />
+                                            ) : friendRequests?.length > 0 ? (
+                                                friendRequests?.map((friend) => (
+                                                    <li
+                                                        key={friend?.lastMessageTime}
+                                                        onClick={() => {
+                                                            setActiveChat({
+                                                                chatId: friend?.chatId,
+                                                                userId: friend?.userId,
+                                                                username: friend?.username,
+                                                            });
+                                                        }}
+                                                        className={`p-3 flex items-center gap-3`}
+                                                    >
+                                                        <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
+                                                        <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
+                                                            <div className="flex justify-between items-baseline">
+                                                                <span className="leading-[1]">{friend?.username}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <Button className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                    <Button className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </li>
-                                            ))}
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <p className="text-[13px] opacity-[0.7] text-white px-3 pt-3 pb-5">No Friend Request</p>
+                                            )}
                                         </ul>
                                     ) : (
                                         ""
