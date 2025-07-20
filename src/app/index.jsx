@@ -30,10 +30,12 @@ const Index = ({ userId, cookie }) => {
     const [showFriendRequests, setShowFriendRequests] = useState(false);
     const [friendRequestsLoading, setFriendRequestsLoading] = useState(false);
     const [friendRequests, setFriendRequests] = useState([]);
+    const [refetchFriendRequests, setRefetchFriendRequests] = useState(false);
 
     // states for my chats
     const [friendsListLoading, setFriendsListLoading] = useState(false);
     const [friendsList, setFriendsList] = useState([]);
+    const [refetchFriendsList, setRefetchFriendsList] = useState(false);
 
     //  states for active / current chat
     const [activeChat, setActiveChat] = useState(null);
@@ -66,7 +68,7 @@ const Index = ({ userId, cookie }) => {
             })
                 .then((res) => {
                     if (!res.ok) {
-                        throw new Error("There is a problem in network call");
+                        throw new Error("Network response was not ok");
                     }
                     return res.json();
                 })
@@ -93,7 +95,7 @@ const Index = ({ userId, cookie }) => {
         })
             .then((res) => {
                 if (!res.ok) {
-                    throw new Error("Network error in api call");
+                    throw new Error("Network response was not ok");
                 }
                 return res.json();
             })
@@ -113,7 +115,9 @@ const Index = ({ userId, cookie }) => {
             .catch((error) => {
                 console.log(error);
             })
-            .finally(() => {});
+            .finally(() => {
+                setRefetchFriendRequests(true);
+            });
     };
 
     // fetch friend request
@@ -128,7 +132,7 @@ const Index = ({ userId, cookie }) => {
             })
                 .then((res) => {
                     if (!res.ok) {
-                        throw new Error("Network call error");
+                        throw new Error("Network response was not ok");
                     }
                     return res.json();
                 })
@@ -140,9 +144,48 @@ const Index = ({ userId, cookie }) => {
                 })
                 .finally(() => {
                     setFriendRequestsLoading(false);
+                    setRefetchFriendRequests(false);
                 });
         }
-    }, [showFriendRequests]);
+    }, [showFriendRequests, refetchFriendRequests]);
+
+    // handler for friend request action
+    const handleFriendRequestAction = (userId, username, action) => {
+        fetch(`http://localhost:3000/api/friends/request/${action}`, {
+            method: "POST",
+            body: JSON.stringify({ userId, username }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.json();
+            })
+            .then((data) => {
+                console.log(data);
+                toast.success(data?.message, {
+                    className: "!bg-[background:var(--surface)]",
+                    position: "bottom-left",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "dark",
+                });
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+            .finally(() => {
+                setRefetchFriendRequests(true);
+                if (action === "accept") setRefetchFriendsList(true);
+            });
+    };
 
     // fetch my chats
     useEffect(() => {
@@ -168,9 +211,10 @@ const Index = ({ userId, cookie }) => {
                 })
                 .finally(() => {
                     setFriendsListLoading(false);
+                    setRefetchFriendsList(false);
                 });
         }
-    }, [loggedin]);
+    }, [loggedin, refetchFriendsList]);
 
     // fetch selected user chats
     useEffect(() => {
@@ -311,32 +355,22 @@ const Index = ({ userId, cookie }) => {
                                             {friendRequestsLoading ? (
                                                 <Loader />
                                             ) : friendRequests?.length > 0 ? (
-                                                friendRequests?.map((friend) => (
-                                                    <li
-                                                        key={friend?.lastMessageTime}
-                                                        onClick={() => {
-                                                            setActiveChat({
-                                                                chatId: friend?.chatId,
-                                                                userId: friend?.userId,
-                                                                username: friend?.username,
-                                                            });
-                                                        }}
-                                                        className={`p-3 flex items-center gap-3`}
-                                                    >
+                                                friendRequests?.map((request) => (
+                                                    <li key={request?.userId} className={`p-3 flex items-center gap-3`}>
                                                         <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                                         <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                                             <div className="flex justify-between items-baseline">
-                                                                <span className="leading-[1]">{friend?.username}</span>
+                                                                <span className="leading-[1]">{request?.username}</span>
                                                                 <div className="flex items-center gap-3">
-                                                                    <Button className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
-                                                                    <Button className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                    <Button onClick={() => handleFriendRequestAction(request?.userId, request?.username, "reject")} className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                    <Button onClick={() => handleFriendRequestAction(request?.userId, request?.username, "accept")} className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </li>
                                                 ))
                                             ) : (
-                                                <p className="text-[13px] opacity-[0.7] text-white px-3 pt-3 pb-5">No Friend Request</p>
+                                                <p className="text-[13px] opacity-[0.7] text-white px-3 pb-5">No Friend Request</p>
                                             )}
                                         </ul>
                                     ) : (
@@ -349,7 +383,7 @@ const Index = ({ userId, cookie }) => {
                                     <ul className="p-3">
                                         {friendsListLoading ? (
                                             <Loader />
-                                        ) : (
+                                        ) : friendsList.length > 0 ? (
                                             friendsList?.map((friend) => (
                                                 <li
                                                     key={friend?.lastMessageTime}
@@ -366,12 +400,12 @@ const Index = ({ userId, cookie }) => {
                                                     <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                                         <div className="flex justify-between items-baseline">
                                                             <span className="leading-[1]">{friend?.username}</span>
-                                                            <span className="text-[13px] opacity-[0.7]">{friend?.lastMessageTime}</span>
                                                         </div>
-                                                        <span className="line-clamp-[1] text-[13px] opacity-[0.7]">{friend?.lastMessage}</span>
                                                     </div>
                                                 </li>
                                             ))
+                                        ) : (
+                                            <p className="text-[13px] opacity-[0.7] text-white px-3 pb-5">No Chat! Search and make friends to Chat</p>
                                         )}
                                     </ul>
                                 </div>
