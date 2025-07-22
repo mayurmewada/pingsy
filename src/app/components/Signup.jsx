@@ -9,7 +9,7 @@ const Signup = ({ setIsLoginAuth }) => {
     const [usernameError, setUsernameError] = useState(false);
     const handleFormSubmit = (values) => {
         setLoading(true);
-        fetch("http://localhost:3000/api/auth/signup", {
+        fetch("https://pingsy.vercel.app/api/auth/signup", {
             method: "POST",
             body: JSON?.stringify(values),
             headers: {

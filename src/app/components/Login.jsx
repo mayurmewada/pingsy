@@ -8,7 +8,7 @@ const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId }) => {
     const [loading, setLoading] = useState(false);
     const handleFormSubmit = (values) => {
         setLoading(true);
-        fetch("http://localhost:3000/api/auth/login", {
+        fetch("https://pingsy.vercel.app/api/auth/login", {
             method: "POST",
             body: JSON.stringify(values),
             headers: {
