@@ -60,7 +60,7 @@ const Index = ({ userId, cookie }) => {
     const handleSearchTextSend = () => {
         if (searchText?.length >= 3) {
             setSearchResultLoading(true);
-            fetch(`https://pingsy.vercel.app/api/friends/find/${searchText}`, {
+            fetch(`/api/friends/find/${searchText}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -86,7 +86,7 @@ const Index = ({ userId, cookie }) => {
 
     // handler for send friend request
     const handleSendRequest = (id, username) => {
-        fetch("https://pingsy.vercel.app/api/friends/request/send", {
+        fetch(`/api/friends/request/send`, {
             method: "POST",
             body: JSON.stringify({ id, username }),
             headers: {
@@ -124,7 +124,7 @@ const Index = ({ userId, cookie }) => {
     useEffect(() => {
         if (showFriendRequests) {
             setFriendRequestsLoading(true);
-            fetch("https://pingsy.vercel.app/api/friends/request/all", {
+            fetch(`/api/friends/request/all`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -151,7 +151,7 @@ const Index = ({ userId, cookie }) => {
 
     // handler for friend request action
     const handleFriendRequestAction = (userId, username, action) => {
-        fetch(`https://pingsy.vercel.app/api/friends/request/${action}`, {
+        fetch(`/api/friends/request/${action}`, {
             method: "POST",
             body: JSON.stringify({ userId, username }),
             headers: {
@@ -191,7 +191,7 @@ const Index = ({ userId, cookie }) => {
     useEffect(() => {
         if (loggedin) {
             setFriendsListLoading(true);
-            fetch("https://pingsy.vercel.app/api/friends/get", {
+            fetch(`/api/friends/get`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -219,7 +219,7 @@ const Index = ({ userId, cookie }) => {
     // fetch selected user chats
     useEffect(() => {
         setChatLoading(true);
-        fetch(`https://pingsy.vercel.app/api/chat/all?chatId=${activeChat?.chatId}`, {
+        fetch(`/api/chat/all?chatId=${activeChat?.chatId}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -241,7 +241,7 @@ const Index = ({ userId, cookie }) => {
                 setChatLoading(false);
             });
 
-        fetch("https://pingsy.vercel.app/api/socket");
+        fetch(`/api/socket`);
         initiateSocket();
         const socket = getSocket();
         socket.emit("joinRoom", { chatId: activeChat?.chatId });
@@ -284,7 +284,7 @@ const Index = ({ userId, cookie }) => {
     return (
         <>
             <ToastContainer />
-            <main className="flex min-h-[100vh] relative">
+            <main className="flex min-h-[100dvh] relative overflow-hidden">
                 {/* loggedin content */}
                 {loggedin ? (
                     <>
@@ -305,7 +305,7 @@ const Index = ({ userId, cookie }) => {
                                 </form>
                             </div>
                             {/* search result / friend requests / my chats */}
-                            <div className="overflow-y-scroll h-[calc(100vh-135px)] pt-5">
+                            <div className="overflow-y-scroll h-[calc(100dvh-123px)] pt-5">
                                 {/* find friends / search results */}
                                 {showFindFriends ? (
                                     <div className="mb-3">
@@ -414,9 +414,9 @@ const Index = ({ userId, cookie }) => {
                         {/* chat section / right side section */}
                         <div className={`lg:max-w-[70%] w-full absolute lg:relative inset-[0] chat-block lg:border-l-[1px] lg:border-l-[border-left-color:var(--surface)] flex flex-col ${activeChat ? "visible" : ""}`}>
                             {activeChat ? (
-                                <div className="w-full px-5 py-4 text-[color:var(--textdark)]">
+                                <div className="w-full lg:pl-5 pr-5 py-4 text-[color:var(--textdark)]">
                                     <div className="flex items-center gap-3">
-                                        <Button onClick={() => setActiveChat(null)} className={"lg:hidden cursor-pointer mr-3"} leadingIcon={<i className="ri-arrow-left-s-line text-[30px] font-normal"></i>} variant={"text"} />
+                                        <Button onClick={() => setActiveChat(null)} className={"lg:hidden cursor-pointer pl-3 pr-1"} leadingIcon={<i className="ri-arrow-left-s-line text-[30px] font-normal"></i>} variant={"text"} />
                                         <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                         <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
                                             <div className="flex justify-between items-baseline">
@@ -428,7 +428,7 @@ const Index = ({ userId, cookie }) => {
                             ) : (
                                 ""
                             )}
-                            <div className={`w-[400px] ${activeChat ? "h-[calc(100vh-154px)]" : "h-[100vh]"} border-y-[1px] border-y-[border-left-color:var(--surface)] w-full relative`}>
+                            <div className={`w-[400px] ${activeChat ? "h-[calc(100dvh-154px)]" : "h-[100dvh]"} border-y-[1px] border-y-[border-left-color:var(--surface)] w-full relative`}>
                                 <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
                                 <div ref={chatRef} className="px-4 py-4 overflow-y-scroll h-full">
                                     {friendsList.length > 0 && chatLoading ? (

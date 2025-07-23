@@ -4,7 +4,7 @@ let socket;
 
 export const initiateSocket = () => {
     if (!socket) {
-        socket = io("https://pingsy.vercel.app", {
+        socket = io(process.env.APIURL, {
             path: "/api/socket",
         });
     }
