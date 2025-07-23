@@ -31,7 +31,6 @@ export const POST = (request) => {
             if (friendExist !== null) {
                 return Response.json({ status: 400, message: "Friend already exists" });
             }
-            console.log(friendExist);
             const reqSent = await userModel.updateOne(
                 {
                     _id: req.id,
