@@ -60,7 +60,7 @@ const Index = ({ userId, cookie }) => {
     const handleSearchTextSend = () => {
         if (searchText?.length >= 3) {
             setSearchResultLoading(true);
-            fetch(`/api/friends/find/${searchText}`, {
+            fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/find/${searchText}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -86,7 +86,7 @@ const Index = ({ userId, cookie }) => {
 
     // handler for send friend request
     const handleSendRequest = (id, username) => {
-        fetch(`/api/friends/request/send`, {
+        fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/send`, {
             method: "POST",
             body: JSON.stringify({ id, username }),
             headers: {
@@ -124,7 +124,7 @@ const Index = ({ userId, cookie }) => {
     useEffect(() => {
         if (showFriendRequests) {
             setFriendRequestsLoading(true);
-            fetch(`/api/friends/request/all`, {
+            fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/all`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -151,7 +151,7 @@ const Index = ({ userId, cookie }) => {
 
     // handler for friend request action
     const handleFriendRequestAction = (userId, username, action) => {
-        fetch(`/api/friends/request/${action}`, {
+        fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/${action}`, {
             method: "POST",
             body: JSON.stringify({ userId, username }),
             headers: {
@@ -191,7 +191,7 @@ const Index = ({ userId, cookie }) => {
     useEffect(() => {
         if (loggedin) {
             setFriendsListLoading(true);
-            fetch(`/api/friends/get`, {
+            fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/get`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -219,7 +219,7 @@ const Index = ({ userId, cookie }) => {
     // fetch selected user chats
     useEffect(() => {
         setChatLoading(true);
-        fetch(`/api/chat/all?chatId=${activeChat?.chatId}`, {
+        fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/chat/all?chatId=${activeChat?.chatId}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -241,7 +241,6 @@ const Index = ({ userId, cookie }) => {
                 setChatLoading(false);
             });
 
-        fetch(`/api/socket`);
         initiateSocket();
         const socket = getSocket();
         socket.emit("joinRoom", { chatId: activeChat?.chatId });
