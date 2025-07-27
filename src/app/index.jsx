@@ -12,6 +12,8 @@ import Loader from "./components/common/Loader";
 
 const Index = ({ userId, cookie }) => {
     const chatRef = useRef(null);
+    // state for socket status
+    const [isSocketUp, setIsSocketUp] = useState(false);
 
     // states for loggedin user
     const [loggedin, setLoggedin] = useState(cookie);
@@ -45,6 +47,34 @@ const Index = ({ userId, cookie }) => {
     // states for message input
     const [currMsg, setCurrMsg] = useState("");
     const [msgBoxDisable, setMsgBoxDisable] = useState(false);
+
+    useEffect(() => {
+        if (!isSocketUp) {
+            fetch(`${process.env.NEXT_PUBLIC_SOCKETAPIBASEURL}/api/wakeup`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error("");
+                    }
+                    return res.json();
+                })
+                .then((data) => {
+                    if (data?.code === "SOCKET_READY_TO_CONNECT") {
+                        setIsSocketUp(true);
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                })
+                .finally(() => {
+                    setFriendsListLoading(false);
+                });
+        }
+    }, []);
 
     // set loggedin userid
     useEffect(() => {
@@ -189,32 +219,34 @@ const Index = ({ userId, cookie }) => {
 
     // fetch my chats
     useEffect(() => {
-        if (loggedin) {
-            setFriendsListLoading(true);
-            fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/get`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
-                .then((res) => {
-                    if (!res.ok) {
-                        throw new Error("Network response was not ok");
-                    }
-                    return res.json();
+        if (isSocketUp) {
+            if (loggedin) {
+                setFriendsListLoading(true);
+                fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/get`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                 })
-                .then((data) => {
-                    setFriendsList(data?.data || []);
-                })
-                .catch((error) => {
-                    console.log(error);
-                })
-                .finally(() => {
-                    setFriendsListLoading(false);
-                    setRefetchFriendsList(false);
-                });
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        setFriendsList(data?.data || []);
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    })
+                    .finally(() => {
+                        setFriendsListLoading(false);
+                        setRefetchFriendsList(false);
+                    });
+            }
         }
-    }, [loggedin, refetchFriendsList]);
+    }, [loggedin, refetchFriendsList, isSocketUp]);
 
     // fetch selected user chats
     useEffect(() => {
