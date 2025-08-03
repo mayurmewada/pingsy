@@ -39,40 +39,68 @@ export const getFormatedDate = (timestamp) => {
 };
 
 export const deriveKey = async (password, salt) => {
-   const enc = new TextEncoder();
-   const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
-   const key = await window.crypto.subtle.deriveKey(
-       {
-           name: "PBKDF2",
-           salt: enc.encode(salt),
-           iterations: 100000,
-           hash: "SHA-256",
-       },
-       keyMaterial,
-       { name: "AES-GCM", length: 256 },
-       true,
-       ["encrypt", "decrypt"]
-   );
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+    const key = await window.crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: enc.encode(salt),
+            iterations: 100000,
+            hash: "SHA-256",
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
 
-   return key;
-}
+    return key;
+};
 
 export const encryptPrivateKey = async (privateKeyStr, password, salt) => {
-  const key = await deriveKey(password, salt);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
 
-  const enc = new TextEncoder();
-  const ciphertext = await crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv,
-    },
-    key,
-    enc.encode(privateKeyStr)
-  );
+    const enc = new TextEncoder();
+    const ciphertext = await crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv,
+        },
+        key,
+        enc.encode(privateKeyStr)
+    );
 
-  return {
-    encrypted: btoa(String.fromCharCode(...new Uint8Array(ciphertext))),
-    iv: btoa(String.fromCharCode(...iv)),
-  };
-}
+    return {
+        encrypted: btoa(String.fromCharCode(...new Uint8Array(ciphertext))),
+        iv: btoa(String.fromCharCode(...iv)),
+    };
+};
+
+export const decryptPrivateKey = async (encryptedStr, ivStr, password, salt) => {
+    const key = await deriveKey(password, salt);
+
+    const dec = new TextDecoder();
+    const encrypted = Uint8Array.from(atob(encryptedStr), (c) => c.charCodeAt(0));
+    const iv = Uint8Array.from(atob(ivStr), (c) => c.charCodeAt(0));
+
+    const decrypted = await crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv,
+        },
+        key,
+        encrypted
+    );
+
+    return dec.decode(decrypted);
+};
+
+export const uint8ArrayToBase64 = (uint8Array) => {
+    return btoa(String.fromCharCode(...uint8Array));
+};
+
+export const base64ToUint8Array = (base64) => {
+    const binary = atob(base64);
+    return Uint8Array.from([...binary].map((c) => c.charCodeAt(0)));
+};

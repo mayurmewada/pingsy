@@ -13,7 +13,7 @@ export const POST = async (request) => {
         if (isUsernameExist) return Response?.json({ status: 400, message: "username already exist" });
 
         const hashedPassword = await argon2.hash(values?.password);
-        await userModel?.create({ username: values?.username, email: values?.email, password: hashedPassword, privateKey: key?.privateKey, publicKey: JSON.stringify(key?.publicKey), iv: key?.iv });
+        await userModel?.create({ username: values?.username, email: values?.email, password: hashedPassword, privateKey: key?.privateKey, publicKey: key?.publicKey, iv: key?.iv });
 
         return Response?.json({ status: 200, message: "User Registered Successfully" });
     } catch (error) {

@@ -4,7 +4,7 @@ import Input from "./common/Input";
 import Button from "./common/Button";
 import { toast } from "react-toastify";
 import nacl from "tweetnacl";
-import { encryptPrivateKey } from "@/utils/helperFunction";
+import { encryptPrivateKey, uint8ArrayToBase64 } from "@/utils/helperFunction";
 
 const Signup = ({ setIsLoginAuth }) => {
     const [keyPair] = useState(nacl.box.keyPair());
@@ -15,7 +15,7 @@ const Signup = ({ setIsLoginAuth }) => {
         const { encrypted, iv } = await encryptPrivateKey(keyPair?.secretKey, values?.password, process.env.PINGSY_SALT);
         fetch(`/api/auth/signup`, {
             method: "POST",
-            body: JSON?.stringify({ values, key: { publicKey: keyPair?.publicKey, privateKey: encrypted, iv} }),
+            body: JSON?.stringify({ values, key: { publicKey: uint8ArrayToBase64(keyPair?.publicKey), privateKey: encrypted, iv} }),
             headers: {
                 "Content-Type": "application/json",
             },

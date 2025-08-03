@@ -1,5 +1,6 @@
 import { dbConnect } from "@/db/dbConnection";
 import userModel from "@/models/user_model";
+import { base64ToUint8Array } from "@/utils/helperFunction";
 import { cookies } from "next/headers";
 const argon2 = require("argon2");
 const jwt = require("jsonwebtoken");
@@ -46,7 +47,16 @@ export const POST = async (request) => {
             sameSite: "strict",
             maxAge: 60 * 60 * 24 * 7,
         });
-        return Response?.json({ data: { token, userId: isUserExist?._id } });
+        const cookiePublicKey = await cookieStore?.set({
+            name: "publicKey",
+            value: base64ToUint8Array(isUserExist?.publicKey),
+            httpOnly: true,
+            path: "/",
+            secure: true,
+            sameSite: "strict",
+            maxAge: 60 * 60 * 24 * 7,
+        });
+        return Response?.json({ data: { token, userId: isUserExist?._id, publicKey: base64ToUint8Array(isUserExist?.publicKey), privateKey: isUserExist?.privateKey, privateKeyHelper: isUserExist?.iv } });
     } catch (error) {
         return Response?.json({ error });
     }

@@ -10,7 +10,7 @@ import { getSocket, initiateSocket } from "../../socket";
 import { getFormatedDate } from "@/utils/helperFunction";
 import Loader from "./components/common/Loader";
 
-const Index = ({ userId, cookie }) => {
+const Index = ({ userId, cookie, privateKey, publicKey }) => {
     const chatRef = useRef(null);
     // state for socket status
     const [isSocketUp, setIsSocketUp] = useState(false);
@@ -18,7 +18,9 @@ const Index = ({ userId, cookie }) => {
     // states for loggedin user
     const [loggedin, setLoggedin] = useState(cookie);
     const [loggedInUserId, setLoggedInUserId] = useState(userId);
-
+    const [userPrivateKey, setUserPrivateKey] = useState(privateKey);
+    const [userPublicKey, setUserPublicKey] = useState(publicKey);
+    
     // state for login / signup form
     const [isLoginAuth, setIsLoginAuth] = useState(true);
 
@@ -504,7 +506,7 @@ const Index = ({ userId, cookie }) => {
                     <div className="w-full border-l-[1px] border-l-[border-left-color:var(--surface)] flex flex-col">
                         <div className="w-[400px] h-[200px] border-y-[1px] border-y-[border-left-color:var(--surface)] h-full w-full relative">
                             <Image className="absolute w-full h-full object-cover opacity-[50%] inset-[0] invert-[1] z-[-1]" src={"/images/chatbg.png"} alt="chat-background-vector" width={800} height={600} />
-                            <div className="flex flex-col justify-center items-center h-full px-4">{isLoginAuth ? <Login setIsLoginAuth={setIsLoginAuth} setLoggedin={setLoggedin} setLoggedInUserId={setLoggedInUserId} /> : <Signup setIsLoginAuth={setIsLoginAuth} />}</div>
+                            <div className="flex flex-col justify-center items-center h-full px-4">{isLoginAuth ? <Login setIsLoginAuth={setIsLoginAuth} setLoggedin={setLoggedin} setLoggedInUserId={setLoggedInUserId} setUserPrivateKey={setUserPrivateKey} setUserPublicKey={setUserPublicKey} /> : <Signup setIsLoginAuth={setIsLoginAuth} />}</div>
                         </div>
                     </div>
                 )}

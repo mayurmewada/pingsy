@@ -4,9 +4,11 @@ import Index from ".";
 const Home = async () => {
     const cookie = await cookies();
     const loggedInUserId = await cookie.get("userId");
-    const pingsyCookie = await cookie.get("token");
+    const token = await cookie.get("token");
+    const privateKey = await cookie.get("privateKey");
+    const publicKey = await cookie.get("publicKey");
 
-    return <Index userId={loggedInUserId?.value || null} cookie={pingsyCookie?.value || false} />;
+    return <Index userId={loggedInUserId?.value || null} cookie={token?.value || false} privateKey={privateKey?.value || null} publicKey={publicKey?.value || null} />;
 };
 
 export default Home;

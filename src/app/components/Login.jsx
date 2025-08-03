@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import Input from "./common/Input";
 import Button from "./common/Button";
 import { toast, ToastContainer } from "react-toastify";
+import { decryptPrivateKey } from "@/utils/helperFunction";
 
-const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId }) => {
+const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId, setUserPrivateKey, setUserPublicKey }) => {
     const [loading, setLoading] = useState(false);
     const handleFormSubmit = (values) => {
         setLoading(true);
@@ -21,7 +22,7 @@ const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId }) => {
                 }
                 return res.json();
             })
-            .then((data) => {
+            .then(async (data) => {
                 if (data?.status === 400) {
                     toast.error(data?.message, {
                         className: "!bg-[background:var(--surface)]",
@@ -35,6 +36,10 @@ const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId }) => {
                         theme: "dark",
                     });
                 } else {
+                    const decryptedKey = await decryptPrivateKey(data?.data?.privateKey, data?.data?.privateKeyHelper, values?.password, process.env.PINGSY_SALT);
+                    document.cookie = `privateKey=${decryptedKey}; path=/; max-age=604800; secure; samesite=strict`;
+                    setUserPrivateKey(decryptedKey);
+                    setUserPublicKey(data?.data?.publicKey)
                     setLoggedin(true);
                     setLoggedInUserId(data?.data?.userId);
                 }

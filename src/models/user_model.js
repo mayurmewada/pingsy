@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
     },
     publicKey: {
         require: true,
-        type: String,
+        type: Array,
     },
     friends: {
         type: Array,

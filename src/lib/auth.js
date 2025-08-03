@@ -6,15 +6,25 @@ export const auth = async (callback) => {
         const cookieStore = await cookies();
         const token = await cookieStore.get("token")?.value;
         const userId = await cookieStore.get("userId")?.value;
+        const privateKey = await cookieStore.get("privateKey")?.value;
+        const publicKey = await cookieStore.get("publicKey")?.value;
 
         const verifyToken = await jwt.verify(token, process.env.PINGSY_JWT);
 
-        if (!verifyToken || verifyToken?.id !== userId) {
+        if (!verifyToken || verifyToken?.id !== userId || !privateKey || !publicKey) {
             cookieStore.set("token", "", {
                 path: "/",
                 maxAge: 0,
             });
             cookieStore.set("userId", "", {
+                path: "/",
+                maxAge: 0,
+            });
+            cookieStore.set("privateKey", "", {
+                path: "/",
+                maxAge: 0,
+            });
+            cookieStore.set("publicKey", "", {
                 path: "/",
                 maxAge: 0,
             });
