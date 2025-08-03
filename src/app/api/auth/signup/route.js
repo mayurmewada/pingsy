@@ -7,13 +7,13 @@ dbConnect();
 export const POST = async (request) => {
     try {
         const reqBody = await request.json();
-        const { username, email, password } = reqBody;
-        const isUsernameExist = await userModel?.findOne({ username });
+        const { values, key } = reqBody;
+        const isUsernameExist = await userModel?.findOne({ username: values?.username });
 
         if (isUsernameExist) return Response?.json({ status: 400, message: "username already exist" });
 
-        const hashedPassword = await argon2.hash(password);
-        await userModel?.create({ username, email, password: hashedPassword });
+        const hashedPassword = await argon2.hash(values?.password);
+        await userModel?.create({ username: values?.username, email: values?.email, password: hashedPassword, privateKey: key?.privateKey, publicKey: JSON.stringify(key?.publicKey), iv: key?.iv });
 
         return Response?.json({ status: 200, message: "User Registered Successfully" });
     } catch (error) {

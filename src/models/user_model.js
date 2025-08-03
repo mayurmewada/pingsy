@@ -20,6 +20,18 @@ const userSchema = new mongoose.Schema({
         require: true,
         type: String,
     },
+    privateKey: {
+        require: true,
+        type: String,
+    },
+    iv: {
+        require: true,
+        type: String,
+    },
+    publicKey: {
+        require: true,
+        type: String,
+    },
     friends: {
         type: Array,
         default: [],

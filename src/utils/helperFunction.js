@@ -37,3 +37,42 @@ export const getFormatedDate = (timestamp) => {
         hour12: true,
     });
 };
+
+export const deriveKey = async (password, salt) => {
+   const enc = new TextEncoder();
+   const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+   const key = await window.crypto.subtle.deriveKey(
+       {
+           name: "PBKDF2",
+           salt: enc.encode(salt),
+           iterations: 100000,
+           hash: "SHA-256",
+       },
+       keyMaterial,
+       { name: "AES-GCM", length: 256 },
+       true,
+       ["encrypt", "decrypt"]
+   );
+
+   return key;
+}
+
+export const encryptPrivateKey = async (privateKeyStr, password, salt) => {
+  const key = await deriveKey(password, salt);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+
+  const enc = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    key,
+    enc.encode(privateKeyStr)
+  );
+
+  return {
+    encrypted: btoa(String.fromCharCode(...new Uint8Array(ciphertext))),
+    iv: btoa(String.fromCharCode(...iv)),
+  };
+}
