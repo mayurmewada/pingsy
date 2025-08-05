@@ -1,3 +1,6 @@
+import nacl from "tweetnacl";
+import naclUtil from "tweetnacl-util";
+
 export const getFormatedDate = (timestamp) => {
     if (typeof timestamp !== "number" || isNaN(timestamp)) {
         return "Invalid timestamp";
@@ -9,7 +12,6 @@ export const getFormatedDate = (timestamp) => {
         return "Invalid date";
     }
 
-    // Create a new date object for today in IST
     const now = new Date();
     const today = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
     const targetDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
@@ -103,4 +105,17 @@ export const uint8ArrayToBase64 = (uint8Array) => {
 export const base64ToUint8Array = (base64) => {
     const binary = atob(base64);
     return Uint8Array.from([...binary].map((c) => c.charCodeAt(0)));
+};
+
+export const encryptMsg = (text, userPublicKey, userPrivateKey) => {
+    const message = naclUtil.decodeUTF8(text);
+    const nonce = nacl.randomBytes(nacl.box.nonceLength);
+    const encryptedMsg = nacl.box(message, nonce, new Uint8Array(userPublicKey.split(",").map(Number)), new Uint8Array(userPrivateKey.split(",").map(Number)));
+    return { encryptedMsg, nonce };
+};
+
+export const decryptMsg = (encryptedMsg, nonce, userPublicKey, userPrivateKey) => {
+    const decrypted = nacl.box.open(encryptedMsg, nonce, new Uint8Array(userPublicKey.split(",").map(Number)), new Uint8Array(userPrivateKey.split(",").map(Number)));
+    const decryptedMsg = naclUtil.encodeUTF8(decrypted);
+    return decryptedMsg;
 };

@@ -16,6 +16,8 @@ export const POST = async (req, { params }) =>
             if (param?.action === "accept") {
                 const newChatId = uuidv4();
                 const currMoment = new String(Date.now());
+                const reqSender = await userModel.findOne({ _id: reqBody.userId });
+                const reqReceiver = await userModel.findOne({ _id: decoded.id });
                 // add friend in loggedin user
                 await userModel.findOneAndUpdate(
                     { _id: decoded.id },
@@ -27,6 +29,7 @@ export const POST = async (req, { params }) =>
                                 lastMessageTime: currMoment,
                                 chatId: newChatId,
                                 userId: reqBody.userId,
+                                publicKey: reqSender?.publicKey
                             },
                         },
                     },
@@ -45,6 +48,7 @@ export const POST = async (req, { params }) =>
                                 lastMessageTime: currMoment,
                                 chatId: newChatId,
                                 userId: decoded.id,
+                                publicKey: reqReceiver?.publicKey
                             },
                         },
                     },

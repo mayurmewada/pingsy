@@ -7,7 +7,7 @@ import Signup from "./components/Signup";
 import Login from "./components/Login";
 import { toast, ToastContainer } from "react-toastify";
 import { getSocket, initiateSocket } from "../../socket";
-import { getFormatedDate } from "@/utils/helperFunction";
+import { base64ToUint8Array, decryptMsg, decryptPrivateKey, encryptMsg, getFormatedDate, uint8ArrayToBase64 } from "@/utils/helperFunction";
 import Loader from "./components/common/Loader";
 
 const Index = ({ userId, cookie, privateKey, publicKey }) => {
@@ -20,7 +20,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
     const [loggedInUserId, setLoggedInUserId] = useState(userId);
     const [userPrivateKey, setUserPrivateKey] = useState(privateKey);
     const [userPublicKey, setUserPublicKey] = useState(publicKey);
-    
+
     // state for login / signup form
     const [isLoginAuth, setIsLoginAuth] = useState(true);
 
@@ -197,7 +197,6 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                 return res.json();
             })
             .then((data) => {
-                console.log(data);
                 toast.success(data?.message, {
                     className: "!bg-[background:var(--surface)]",
                     position: "bottom-left",
@@ -300,6 +299,8 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
         setCurrMsg(e.target.value);
     };
     const handleMsgSend = async () => {
+        const receiver = encryptMsg(currMsg, String(base64ToUint8Array(activeChat?.publicKey)), userPrivateKey);
+        const sender = encryptMsg(currMsg, userPublicKey, userPrivateKey);
         if (currMsg?.length && loggedInUserId) {
             setMsgBoxDisable(true);
 
@@ -307,7 +308,14 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
             await socket.emit("sendMessage", {
                 chatId: activeChat?.chatId,
                 userId: loggedInUserId,
-                message: currMsg,
+                message: {
+                    forReceiver: uint8ArrayToBase64(receiver?.encryptedMsg),
+                    forSender: uint8ArrayToBase64(sender?.encryptedMsg),
+                },
+                nonce: {
+                    forReceiver: uint8ArrayToBase64(receiver?.nonce),
+                    forSender: uint8ArrayToBase64(sender?.nonce),
+                },
             });
             setCurrMsg("");
             setMsgBoxDisable(false);
@@ -425,6 +433,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                                             chatId: friend?.chatId,
                                                             userId: friend?.userId,
                                                             username: friend?.username,
+                                                            publicKey: friend?.publicKey,
                                                         });
                                                     }}
                                                     className={`p-3 flex items-center gap-3 ${friend?.userId === activeChat?.userId ? "bg-[background:var(--surface)] rounded-[12px]" : ""}`}
@@ -471,12 +480,14 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                     ) : (
                                         <ul className="flex flex-col gap-y-3">
                                             {loggedInUserId &&
-                                                chat?.map((message) => (
-                                                    <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
-                                                        {message?.message}
-                                                        <p className="text-[12px] mt-2 opacity-[50%]">{getFormatedDate(Number(message?.time))}</p>
-                                                    </li>
-                                                ))}
+                                                chat?.map((message) => {
+                                                    return (
+                                                        <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
+                                                            {decryptMsg(base64ToUint8Array(message?.userId === loggedInUserId ? message?.message?.forSender : message?.message?.forReceiver), base64ToUint8Array(message?.userId === loggedInUserId ? message?.nonce?.forSender : message?.nonce?.forReceiver), message?.userId === loggedInUserId ? userPublicKey: String(base64ToUint8Array(activeChat?.publicKey)), userPrivateKey)}
+                                                            <p className="text-[12px] mt-2 opacity-[50%]">{getFormatedDate(Number(message?.time))}</p>
+                                                        </li>
+                                                    );
+                                                })}
                                         </ul>
                                     )}
                                 </div>
