@@ -56,7 +56,7 @@ export const POST = async (request) => {
             sameSite: "strict",
             maxAge: 60 * 60 * 24 * 7,
         });
-        return Response?.json({ data: { token, userId: isUserExist?._id, publicKey: base64ToUint8Array(isUserExist?.publicKey), privateKey: isUserExist?.privateKey, privateKeyHelper: isUserExist?.iv } });
+        return Response?.json({ data: { token, userId: isUserExist?._id, publicKey: String(Object.values(base64ToUint8Array(isUserExist?.publicKey))), privateKey: isUserExist?.privateKey, privateKeyHelper: isUserExist?.iv } });
     } catch (error) {
         return Response?.json({ error });
     }

@@ -13,7 +13,7 @@ const Button = ({ title = null, viewType = null, variant, size, isDisabled, type
     };
 
     return (
-        <button className={`flex justify-center items-center gap-x-[6px] cursor-pointer ${styles[variant]} ${styles[size]}${viewType === "icon" ? " !px-2" : " font-semibold"} ${isLoading ? "relative" : ""} ${className}`} onBlur={onBlur} onClick={onClick} type={type} disabled={isDisabled}>
+        <button className={`flex justify-center items-center gap-x-[6px] cursor-pointer ${styles[size]}${viewType === "icon" ? " !px-2" : " font-semibold"} ${isLoading ? "relative" : ""} ${className} ${isLoading && (variant === "secondary") ? "" : styles[variant]}`} onBlur={onBlur} onClick={onClick} type={type} disabled={isDisabled}>
             {isLoading ? (
                 <Loader className={`${variant === "primary" ? "invert" : ""} absolute`} />
             ) : (

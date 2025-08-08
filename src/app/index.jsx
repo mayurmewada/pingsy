@@ -29,12 +29,14 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
     const [showFindFriends, setShowFindFriends] = useState(false);
     const [searchResultLoading, setSearchResultLoading] = useState(false);
     const [searchResult, setSearchResult] = useState([]);
+    const [sendRequestBtnLoading, setSendRequestBtnLoading] = useState("");
 
     //  state for friend requests
     const [showFriendRequests, setShowFriendRequests] = useState(false);
     const [friendRequestsLoading, setFriendRequestsLoading] = useState(false);
     const [friendRequests, setFriendRequests] = useState([]);
     const [refetchFriendRequests, setRefetchFriendRequests] = useState(false);
+    const [friendRequestsActionBtnLoading, setFriendRequestsActionBtnLoading] = useState("");
 
     // states for my chats
     const [friendsListLoading, setFriendsListLoading] = useState(false);
@@ -118,6 +120,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
 
     // handler for send friend request
     const handleSendRequest = (id, username) => {
+        setSendRequestBtnLoading(id);
         fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/send`, {
             method: "POST",
             body: JSON.stringify({ id, username }),
@@ -149,6 +152,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
             })
             .finally(() => {
                 setRefetchFriendRequests(true);
+                setSendRequestBtnLoading("");
             });
     };
 
@@ -183,6 +187,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
 
     // handler for friend request action
     const handleFriendRequestAction = (userId, username, action) => {
+        setFriendRequestsActionBtnLoading(userId);
         fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/${action}`, {
             method: "POST",
             body: JSON.stringify({ userId, username }),
@@ -214,6 +219,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
             })
             .finally(() => {
                 setRefetchFriendRequests(true);
+                setFriendRequestsActionBtnLoading("");
                 if (action === "accept") setRefetchFriendsList(true);
             });
     };
@@ -372,9 +378,9 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                                     <li key={friend?._id} className={`p-3 flex items-center gap-3`}>
                                                         <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                                         <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                                            <div className="flex justify-between items-baseline">
+                                                            <div className="flex justify-between items-center">
                                                                 <span className="leading-[1]">{friend?.username}</span>
-                                                                <Button onClick={() => handleSendRequest(friend?._id, friend?.username)} className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                <Button isLoading={friend?._id === sendRequestBtnLoading} onClick={() => handleSendRequest(friend?._id, friend?.username)} className={"!px-2"} leadingIcon={<i className="ri-add-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
                                                             </div>
                                                         </div>
                                                     </li>
@@ -400,11 +406,17 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                                     <li key={request?.userId} className={`p-3 flex items-center gap-3`}>
                                                         <div className="min-w-[50px] max-w-[50px] min-h-[50px] max-h-[50px] rounded-[50%] bg-[#333333]"></div>
                                                         <div className="text-[color:var(--textlight)] w-full flex flex-col justify-center gap-[2px]">
-                                                            <div className="flex justify-between items-baseline">
+                                                            <div className="flex justify-between items-center">
                                                                 <span className="leading-[1]">{request?.username}</span>
                                                                 <div className="flex items-center gap-3">
-                                                                    <Button onClick={() => handleFriendRequestAction(request?.userId, request?.username, "reject")} className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
-                                                                    <Button onClick={() => handleFriendRequestAction(request?.userId, request?.username, "accept")} className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                    {friendRequestsActionBtnLoading ? (
+                                                                        <Loader />
+                                                                    ) : (
+                                                                        <>
+                                                                            <Button onClick={() => handleFriendRequestAction(request?.userId, request?.username, "reject")} className={"!px-2"} leadingIcon={<i className="ri-close-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                            <Button onClick={() => handleFriendRequestAction(request?.userId, request?.username, "accept")} className={"!px-2"} leadingIcon={<i className="ri-check-fill text-[18px] font-normal"></i>} size={"small"} variant={"secondary"} />
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -483,7 +495,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                                 chat?.map((message) => {
                                                     return (
                                                         <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
-                                                            {decryptMsg(base64ToUint8Array(message?.userId === loggedInUserId ? message?.message?.forSender : message?.message?.forReceiver), base64ToUint8Array(message?.userId === loggedInUserId ? message?.nonce?.forSender : message?.nonce?.forReceiver), message?.userId === loggedInUserId ? userPublicKey: String(base64ToUint8Array(activeChat?.publicKey)), userPrivateKey)}
+                                                            {decryptMsg(base64ToUint8Array(message?.userId === loggedInUserId ? message?.message?.forSender : message?.message?.forReceiver), base64ToUint8Array(message?.userId === loggedInUserId ? message?.nonce?.forSender : message?.nonce?.forReceiver), message?.userId === loggedInUserId ? userPublicKey : String(base64ToUint8Array(activeChat?.publicKey)), userPrivateKey)}
                                                             <p className="text-[12px] mt-2 opacity-[50%]">{getFormatedDate(Number(message?.time))}</p>
                                                         </li>
                                                     );
