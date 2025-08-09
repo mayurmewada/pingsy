@@ -491,7 +491,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                         </div>
                                     ) : (
                                         <ul className="flex flex-col gap-y-3">
-                                            {loggedInUserId &&
+                                            {loggedInUserId && activeChat &&
                                                 chat?.map((message) => {
                                                     return (
                                                         <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
