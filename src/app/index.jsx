@@ -6,7 +6,7 @@ import Input from "./components/common/Input";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import { toast, ToastContainer } from "react-toastify";
-import { getSocket, initiateSocket } from "../../socket";
+import { getRefreshFriendsSocket, getSocket, initiateRefreshFriendsSocket, initiateSocket } from "../../socket";
 import { base64ToUint8Array, decryptMsg, decryptPrivateKey, encryptMsg, getFormatedDate, uint8ArrayToBase64 } from "@/utils/helperFunction";
 import Loader from "./components/common/Loader";
 
@@ -84,8 +84,21 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
     useEffect(() => {
         if (userId !== null) {
             setLoggedInUserId(userId);
+            initiateRefreshFriendsSocket();
+            const socket = getRefreshFriendsSocket();
+
+            socket.emit("joinRoom", { userId });
+
+            socket.on("receiveMessage", (data) => {
+                console.log("Message from server:", data);
+                setRefetchFriendsList(data?.refresh);
+            });
+
+            return () => {
+                socket.off("receiveMessage");
+            };
         }
-    }, []);
+    }, [userId]);
 
     // handlers for search input
     const handleSearchTextChange = (e) => {
@@ -186,7 +199,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
     }, [showFriendRequests, refetchFriendRequests]);
 
     // handler for friend request action
-    const handleFriendRequestAction = (userId, username, action) => {
+    const handleFriendRequestAction = async (userId, username, action) => {
         setFriendRequestsActionBtnLoading(userId);
         fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/${action}`, {
             method: "POST",
@@ -217,10 +230,14 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
             .catch((error) => {
                 console.log(error);
             })
-            .finally(() => {
+            .finally(async () => {
                 setRefetchFriendRequests(true);
                 setFriendRequestsActionBtnLoading("");
-                if (action === "accept") setRefetchFriendsList(true);
+                if (action === "accept") {
+                    setRefetchFriendsList(true);
+                    const socket = getRefreshFriendsSocket();
+                    await socket.emit("sendMessage", { userId: userId });
+                }
             });
     };
 
@@ -491,7 +508,8 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                         </div>
                                     ) : (
                                         <ul className="flex flex-col gap-y-3">
-                                            {loggedInUserId && activeChat &&
+                                            {loggedInUserId &&
+                                                activeChat &&
                                                 chat?.map((message) => {
                                                     return (
                                                         <li key={`${message?.time}-${message?.message}`} className={`text-[#fff] max-w-[70%] w-fit inline py-2 px-3 rounded-[8px] shadow-xl ${message?.userId === loggedInUserId ? "bg-[background:var(--primary-surface)] ms-auto" : "bg-[background:var(--surface)]"}`}>
