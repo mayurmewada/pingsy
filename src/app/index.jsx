@@ -84,21 +84,30 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
     useEffect(() => {
         if (userId !== null) {
             setLoggedInUserId(userId);
-            initiateRefreshFriendsSocket();
-            const socket = getRefreshFriendsSocket();
-
-            socket.emit("joinRoom", { userId });
-
-            socket.on("receiveMessage", (data) => {
-                console.log("Message from server:", data);
-                setRefetchFriendsList(data?.refresh);
-            });
-
-            return () => {
-                socket.off("receiveMessage");
-            };
         }
     }, [userId]);
+
+    // Always join refresh room using latest logged-in user state.
+    useEffect(() => {
+        if (!loggedin || !loggedInUserId || !isSocketUp) return;
+
+        initiateRefreshFriendsSocket();
+        const socket = getRefreshFriendsSocket();
+        if (!socket) return;
+
+        const handleRefreshMessage = (data) => {
+            if (data?.refresh) {
+                setRefetchFriendsList(true);
+            }
+        };
+
+        socket.emit("joinRoom", { userId: loggedInUserId });
+        socket.on("receiveMessage", handleRefreshMessage);
+
+        return () => {
+            socket.off("receiveMessage", handleRefreshMessage);
+        };
+    }, [loggedin, loggedInUserId, isSocketUp]);
 
     // handlers for search input
     const handleSearchTextChange = (e) => {
@@ -236,7 +245,12 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                 if (action === "accept") {
                     setRefetchFriendsList(true);
                     const socket = getRefreshFriendsSocket();
-                    await socket.emit("sendMessage", { userId: userId });
+                    if (socket) {
+                        await socket.emit("sendMessage", {
+                            userId,
+                            senderId: loggedInUserId,
+                        });
+                    }
                 }
             });
     };
