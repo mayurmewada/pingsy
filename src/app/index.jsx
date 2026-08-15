@@ -109,6 +109,25 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
         };
     }, [loggedin, loggedInUserId, isSocketUp]);
 
+    // handler for logout
+    const handleLogout = () => {
+        fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/auth/logout`, {
+            method: "DELETE",
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setLoggedin(false);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
     // handlers for search input
     const handleSearchTextChange = (e) => {
         setSearchText(e.target.value);
@@ -370,9 +389,12 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                         <div className={`lg:max-w-[30%] w-full main-block bg-[background-color:var(--background)] ${activeChat ? "" : "visible"}`}>
                             {/* branding / search section */}
                             <div className="px-6">
-                                <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[28px] tracking-[1px] flex items-baseline leading-[82px]">
-                                    P<span className="text-[24px] tracking-[1px]">INGSY</span>
-                                </h1>
+                                <div className="flex justify-between items-center">
+                                    <h1 className="font-[family-name:var(--font-vonca-medium)] text-[color:var(--textlight)] text-[28px] tracking-[1px] flex items-baseline leading-[82px]">
+                                        P<span className="text-[24px] tracking-[1px]">INGSY</span>
+                                    </h1>
+                                    <Button onClick={handleLogout} className={"text-white/60 hover:text-white/80 text-[22px] font-medium"} viewType="icon" leadingIcon={<i className="ri-logout-box-line"></i>} />
+                                </div>
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
