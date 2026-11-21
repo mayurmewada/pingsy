@@ -36,6 +36,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
     const [friendRequestsLoading, setFriendRequestsLoading] = useState(false);
     const [friendRequests, setFriendRequests] = useState([]);
     const [refetchFriendRequests, setRefetchFriendRequests] = useState(false);
+    const [hasNewFriendRequest, setHasNewFriendRequest] = useState(false);
     const [friendRequestsActionBtnLoading, setFriendRequestsActionBtnLoading] = useState("");
 
     // states for my chats
@@ -98,6 +99,15 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
         const handleRefreshMessage = (data) => {
             if (data?.refresh) {
                 setRefetchFriendsList(true);
+            }
+
+            if (data?.refreshFriendRequests) {
+                setHasNewFriendRequest(true);
+                toast.info("You received a new friend request", {
+                    position: "bottom-left",
+                    autoClose: 5000,
+                    theme: "dark",
+                });
             }
         };
 
@@ -187,6 +197,16 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                     progress: undefined,
                     theme: "dark",
                 });
+
+                if (data?.requestSent) {
+                    const socket = getRefreshFriendsSocket();
+                    if (socket) {
+                        socket.emit("sendMessage", {
+                            userId: id,
+                            refreshFriendRequests: true,
+                        });
+                    }
+                }
             })
             .catch((error) => {
                 console.log(error);
@@ -215,6 +235,7 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                 })
                 .then((data) => {
                     setFriendRequests(data?.data);
+                    setHasNewFriendRequest(data?.hasUnread === true);
                 })
                 .catch((error) => {
                     console.log(error);
@@ -378,6 +399,47 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
         }
     };
 
+    // Load unread friend-request status without opening the list.
+    useEffect(() => {
+        if (loggedin) {
+            fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/all`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    setHasNewFriendRequest(data?.hasUnread === true);
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        }
+    }, [loggedin, isSocketUp]);
+
+    // Open or close the list. Opening marks database requests as read.
+    const handleFriendRequestsToggle = async () => {
+        const shouldOpen = !showFriendRequests;
+
+        if (shouldOpen) {
+            setHasNewFriendRequest(false);
+
+            await fetch(`${process?.env?.NEXT_PUBLIC_APIBASEURL}/api/friends/request/all`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }).catch((error) => {
+                console.log(error);
+            });
+
+            setRefetchFriendRequests(true);
+        }
+
+        setShowFriendRequests(shouldOpen);
+    };
+
     return (
         <>
             <ToastContainer />
@@ -447,8 +509,11 @@ const Index = ({ userId, cookie, privateKey, publicKey }) => {
                                 {/* friend requests */}
                                 <div className="mb-3">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-white opacity-[0.7] px-6">Friend Requests</span>
-                                        <Button onClick={() => setShowFriendRequests(!showFriendRequests)} className={"cursor-pointer opacity-[0.7] mr-3"} leadingIcon={<i className={`${showFriendRequests ? "ri-arrow-up-s-line" : "ri-arrow-down-s-line"} text-[18px] font-normal`}></i>} variant={"text"} />
+                                        <span className="text-white opacity-[0.7] px-6 flex items-center gap-2">
+                                            Friend Requests
+                                            {hasNewFriendRequest ? <span className="w-2.5 h-2.5 rounded-full bg-red-500" aria-label="New friend request"></span> : null}
+                                        </span>
+                                        <Button onClick={handleFriendRequestsToggle} className={"cursor-pointer opacity-[0.7] mr-3"} leadingIcon={<i className={`${showFriendRequests ? "ri-arrow-up-s-line" : "ri-arrow-down-s-line"} text-[18px] font-normal`}></i>} variant={"text"} />
                                     </div>
                                     {showFriendRequests ? (
                                         <ul className="p-3">

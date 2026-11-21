@@ -113,9 +113,8 @@ const Signup = ({ setIsLoginAuth }) => {
                     </form>
                 )}
             </Formik>
-            <Button className={"mt-8 mb-5"} title="Forgot Password" leadingIcon={<i className="ri-question-line font-normal text-[18px]"></i>} />
-            <p className="inline-flex whitespace-pre mb-4">
-                Already have an Account ? <Button onClick={() => setIsLoginAuth(true)} title={"Login"} />
+            <p className="inline-flex whitespace-pre mb-4 mt-8">
+                Already have an Account ? <Button onClick={() => setIsLoginAuth(true)} title={"Login"} className={"hover:opacity-70"} />
             </p>
         </div>
     );

@@ -48,15 +48,16 @@ export const POST = (request) => {
                         request: {
                             userId: decoded.id,
                             username: decoded.username,
+                            isUnread: true,
                         },
                     },
                 }
             );
             if (reqSent?.acknowledged) {
                 if (reqSent?.modifiedCount === 1) {
-                    return Response.json({ status: 200, message: "Friend request sent!", friendExist });
+                    return Response.json({ status: 200, message: "Friend request sent!", requestSent: true, friendExist });
                 } else if (reqSent?.modifiedCount === 0) {
-                    return Response.json({ status: 200, message: "Friend request already sent!", friendExist });
+                    return Response.json({ status: 200, message: "Friend request already sent!", requestSent: false, friendExist });
                 }
             }
         } catch (error) {

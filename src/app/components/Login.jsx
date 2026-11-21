@@ -97,9 +97,9 @@ const Login = ({ setIsLoginAuth, setLoggedin, setLoggedInUserId, setUserPrivateK
                         </form>
                     )}
                 </Formik>
-                <Button className={"mt-8 mb-5"} title="Forgot Password" leadingIcon={<i className="ri-question-line font-normal text-[18px]"></i>} />
+                <Button className={"mt-8 mb-5 hover:opacity-70"} title="Forgot Password" leadingIcon={<i className="ri-question-line font-normal text-[18px]"></i>} />
                 <p className="inline-flex whitespace-pre mb-4">
-                    New at Pingsy ? <Button onClick={() => setIsLoginAuth(false)} title={"Create An Account"} />
+                    New at Pingsy ? <Button onClick={() => setIsLoginAuth(false)} title={"Create An Account"} className={"hover:opacity-70"} />
                 </p>
             </div>
         </>
